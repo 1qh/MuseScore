@@ -231,6 +231,13 @@ if (CC_IS_EMCC)
     set(APP_SRC ${APP_SRC} webapi_export.cpp)
 endif()
 
+if (OS_IS_MAC)
+    set(APP_SRC ${APP_SRC}
+        internal/platform/macos/macosbackground.h
+        internal/platform/macos/macosbackground.mm
+    )
+endif()
+
 qt_add_executable(MuseScoreStudio
     WIN32 MACOSX_BUNDLE
     ${APP_RCC_SOURCES}

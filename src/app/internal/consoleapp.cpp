@@ -25,6 +25,11 @@
 #include <QApplication>
 #ifndef Q_OS_WASM
 #include <QThreadPool>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+#include <iostream>
+#include <string>
 #endif
 
 #include "modularity/ioc.h"
@@ -446,6 +451,20 @@ int ConsoleApp::processConverter(const CmdOptions::ConverterTask& task)
     case ConvertType::Batch:
         ret = converter()->batchConvert(task.inputFile, openParams, soundProfile, extensionUri);
         break;
+    case ConvertType::Serve: {
+        std::string line;
+        while (std::getline(std::cin, line)) {
+            const QJsonObject request = QJsonDocument::fromJson(QByteArray::fromStdString(line)).object();
+            converter::OpenParams params = openParams;
+            if (request.contains("style")) {
+                params.stylePath = request.value("style").toString();
+            }
+            const UriQuery extension(request.value("extension").toString().toStdString());
+            const Ret done = converter()->batchConvert(request.value("job").toString(), params, soundProfile, extension);
+            const std::string id = request.value("id").toString().toStdString();
+            std::cout << id << (done ? " ok" : " failed " + done.toString()) << std::endl;
+        }
+    } break;
     case ConvertType::File: {
         std::string transposeOptionsJson = task.params[CmdOptions::ParamKey::ScoreTransposeOptions].toString().toStdString();
         std::optional<ConvertTarget> target = parseTarget(task.params);

@@ -23,6 +23,10 @@
 #include <csignal>
 
 #include <QApplication>
+
+#ifdef Q_OS_MACOS
+#include "internal/platform/macos/macosbackground.h"
+#endif
 #include <QStyleHints>
 #include <QQuickWindow>
 #include <QSslSocket>
@@ -160,6 +164,12 @@ int main(int argc, char** argv)
     } else {
         qapp = new QApplication(argc, argv);
     }
+
+#ifdef Q_OS_MACOS
+    if (runMode == IApplication::RunMode::ConsoleApp) {
+        mu::app::runWithoutDockIcon();
+    }
+#endif
 
     fixSslBackend();
 

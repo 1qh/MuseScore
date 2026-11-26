@@ -89,6 +89,9 @@ void CommandLineParser::init()
     m_parser.addOption(QCommandLineOption({ "r", "image-resolution" }, "Set output resolution for image export", "DPI"));
     m_parser.addOption(QCommandLineOption({ "o", "export-to" }, "Export to 'file'. Format depends on file's extension", "file"));
     m_parser.addOption(QCommandLineOption({ "j", "job" }, "Process a conversion job", "file"));
+    m_parser.addOption(QCommandLineOption("serve",
+                                          "Stay running and process 1 conversion job per line of standard input: "
+                                          "{\"id\", \"job\", \"extension\", \"style\"}"));
     m_parser.addOption(QCommandLineOption("extension", "Use extension to process a conversion job", "uri"));
 
     m_parser.addOption(QCommandLineOption({ "F", "factory-settings" }, "Use factory settings"));
@@ -345,6 +348,11 @@ void CommandLineParser::parse(int argc, char** argv)
         m_options.runMode = IApplication::RunMode::ConsoleApp;
         m_options.converterTask.type = ConvertType::Batch;
         m_options.converterTask.inputFile = fromUserInputPath(m_parser.value("j"));
+    }
+
+    if (m_parser.isSet("serve")) {
+        m_options.runMode = IApplication::RunMode::ConsoleApp;
+        m_options.converterTask.type = ConvertType::Serve;
     }
 
     if (m_parser.isSet("score-media")) {

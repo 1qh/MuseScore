@@ -12,6 +12,7 @@ namespace mu::app {
 enum class ConvertType {
     File,
     Batch,
+    Serve,
     ConvertScoreParts,
     ExportScoreMedia,
     ExportScoreMeta,
