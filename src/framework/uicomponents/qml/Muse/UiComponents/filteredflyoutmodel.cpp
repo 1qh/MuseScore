@@ -29,14 +29,19 @@ using namespace muse::uicomponents;
 // Recursively traverse a flyout tree, collect all "leaves" (items without a sub item)...
 static void flattenTreeModel(const QVariant& treeModel, const QString& categoryTitle, QVariantList& result, QVariant& alwaysAppend)
 {
+    // A section header groups the leaves that follow it: they keep their bare titles and are listed under the header
+    QString sectionTitle;
+
     for (const QVariant& item : treeModel.toList()) {
         QVariantMap menuItem = item.toMap();
-        if (menuItem.empty()) {
+        const QString title = menuItem.value("title").toString();
+        if (title.isEmpty()) {
+            sectionTitle.clear(); // A separator ends the section
             continue;
         }
 
-        const QString title = menuItem.value("title").toString();
-        if (title.isEmpty()) {
+        if (menuItem.value("isSectionHeader").toBool()) {
+            sectionTitle = title;
             continue;
         }
 
@@ -57,6 +62,12 @@ static void flattenTreeModel(const QVariant& treeModel, const QString& categoryT
 
         // Found leaf...
         if (!menuItem.value("includeInFilteredLists").toBool()) {
+            continue;
+        }
+
+        if (!sectionTitle.isEmpty()) {
+            menuItem.insert("section", sectionTitle);
+            result << menuItem;
             continue;
         }
 
@@ -113,6 +124,28 @@ void FilteredFlyoutModel::setFilterText(const QString& filterText)
     for (const QVariant& item : m_flattenedModel.toList()) {
         QVariantMap itemMap = item.toMap();
         const QString title = itemMap.value("title").toString();
+        const QString section = itemMap.value("section").toString();
+
+        if (!section.isEmpty()) {
+            if (!title.contains(m_filterText, Qt::CaseInsensitive) && !section.contains(m_filterText, Qt::CaseInsensitive)) {
+                continue;
+            }
+
+            if (section != currentPrefix) {
+                QVariantMap header;
+                header.insert("id", QString(section + "\\section"));
+                header.insert("title", section);
+                header.insert("enabled", false);
+                header.insert("checkable", false);
+                header.insert("isSectionHeader", true);
+                newModel << header;
+            }
+
+            newModel << itemMap;
+            currentPrefix = section;
+            continue;
+        }
+
         if (!title.contains(m_filterText, Qt::CaseInsensitive)) {
             continue;
         }

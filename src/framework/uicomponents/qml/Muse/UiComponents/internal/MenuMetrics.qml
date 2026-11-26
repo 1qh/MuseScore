@@ -20,6 +20,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import QtQml 2.15
+import QtQuick
 
 import Muse.Ui
 import Muse.UiComponents
@@ -88,14 +89,33 @@ QtObject {
         let leftWidth = 0
         let rightWidth = 0
 
+        let headerWidth = 0
+
         for (let j = 0; j < model.length; j++) {
-            testItem.modelData = Boolean(model.get) ? model.get(j).item : model[j]
+            let entry = Boolean(model.get) ? model.get(j).item : model[j]
+
+            // A section header is drawn in the title font, so its full title sets a width of its own
+            if (Boolean(entry) && entry.isSectionHeader) {
+                headerMetrics.text = entry.title
+                headerWidth = Math.max(headerWidth, Math.ceil(headerMetrics.advanceWidth) + root.sectionHeaderPadding)
+                continue
+            }
+
+            testItem.modelData = entry
             leftWidth = Math.max(leftWidth, testItem.calculatedLeftPartWidth())
             rightWidth = Math.max(rightWidth, testItem.calculatedRightPartWidth())
         }
 
+        leftWidth = Math.max(leftWidth, headerWidth - rightWidth)
+
         root.itemLeftPartWidth = leftWidth
         root.itemRightPartWidth = rightWidth
+    }
+
+    readonly property int sectionHeaderPadding: 24
+
+    property TextMetrics headerMetrics: TextMetrics {
+        font: ui.theme.titleBoldFont
     }
 
     property StyledMenuItem testItem: StyledMenuItem {

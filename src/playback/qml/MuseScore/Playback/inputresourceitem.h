@@ -75,10 +75,10 @@ private:
 
     QVariantMap buildMuseMenuItem(const ResourceByVendorMap& resourcesByVendor) const;
     QVariantMap buildVstMenuItem(const ResourceByVendorMap& resourcesByVendor) const;
-    QVariantMap buildSoundFontsMenuItem(const ResourceByVendorMap& resourcesByVendor) const;
+    QVariantList buildSoundFontItems(const ResourceByVendorMap& resourcesByVendor) const;
     QVariantMap buildMsBasicMenuItem(const muse::audio::AudioResourceMetaList& availableResources, bool isCurrentSoundFont,
                                      const std::optional<muse::midi::Program>& currentPreset) const;
-    QVariantMap buildSoundFontMenuItem(const muse::String& soundFont, const muse::audio::AudioResourceMetaList& availableResources,
+    QVariantList buildSoundFontSection(const muse::String& soundFont, const muse::audio::AudioResourceMetaList& availableResources,
                                        bool isCurrentSoundFont, const std::optional<muse::midi::Program>& currentPreset) const;
 
     void updateAvailableResources(const muse::audio::AudioResourceMetaList& availableResources);

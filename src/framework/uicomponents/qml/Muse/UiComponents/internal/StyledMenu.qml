@@ -50,6 +50,7 @@ MenuView {
     function requestFocus() {
         if (root.isSearchable) {
             searchLoader.requestFocus()
+            Qt.callLater(prv.scrollToCurrent)
             return
         }
         var focused = prv.focusOnSelected()
@@ -317,6 +318,16 @@ MenuView {
                         rightMargin: root.viewMargins
                     }
 
+                    onAccepted: {
+                        if (!root.isSearching) {
+                            return
+                        }
+                        var item = prv.firstPickable()
+                        if (item) {
+                            root.handleMenuItem(item.id)
+                        }
+                    }
+
                     onSearchTextChanged: {
                         if (root.isSubMenuOpen) {
                             // This is a failsafe - see onIsSubmenuOpenChanged...
@@ -452,6 +463,29 @@ MenuView {
                     return false
                 }
 
+                // An item marked scrollTo is the current choice: show it when the menu opens
+                function scrollToCurrent() {
+                    var items = listView.model
+                    for (var i = 0; i < (items ? items.length : 0); ++i) {
+                        if (items[i] && items[i].scrollTo) {
+                            listView.positionViewAtIndex(i, ListView.Center)
+                            return
+                        }
+                    }
+                }
+
+                // The first enabled item without a submenu, picked by Enter while searching
+                function firstPickable() {
+                    var items = listView.model
+                    for (var i = 0; i < (items ? items.length : 0); ++i) {
+                        var item = items[i]
+                        if (item && item.title && item.enabled !== false && !(item.subitems && item.subitems.length) && item.id) {
+                            return item
+                        }
+                    }
+                    return null
+                }
+
                 function focusOnSelected() {
                     var item = selectedItem()
                     if (Boolean(item)) {
@@ -483,7 +517,7 @@ MenuView {
                 readonly property var modelData: Boolean(root.model.get) ? model.item : model.modelData
                 readonly property bool isSeparator: !(modelData?.title)
 
-                sourceComponent: isSeparator ? separatorComp : menuItemComp
+                sourceComponent: isSeparator ? separatorComp : (modelData?.isSectionHeader ? sectionHeaderComp : menuItemComp)
 
                 Component {
                     id: menuItemComp
@@ -546,6 +580,28 @@ MenuView {
 
                             root.handleMenuItem(itemId)
                         }
+                    }
+                }
+
+                Component {
+                    id: sectionHeaderComp
+
+                    // A section's title: large, bold and at full contrast, and never a choice
+                    StyledTextLabel {
+                        width: root.menuMetrics?.itemWidth ?? 0
+                        height: implicitHeight + 16
+
+                        leftPadding: 12
+                        rightPadding: 12
+                        topPadding: 10
+                        bottomPadding: 6
+
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignBottom
+
+                        text: loader.modelData?.title ?? ""
+                        font: ui.theme.titleBoldFont
+                        color: ui.theme.fontPrimaryColor
                     }
                 }
 
