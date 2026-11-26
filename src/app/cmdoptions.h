@@ -7,6 +7,7 @@
 #include "global/io/path.h"
 #include "global/iapplication.h"
 #include "global/logger.h"
+#include "importexport/videoexport/videoexporttypes.h"
 
 namespace mu::app {
 enum class ConvertType {
@@ -74,6 +75,7 @@ struct CmdOptions {
     } exportAudio;
 
     struct {
+        std::optional<iex::videoexport::ViewMode> viewMode;
         std::optional<std::string> resolution;
         std::optional<int> fps;
         std::optional<double> leadingSec;

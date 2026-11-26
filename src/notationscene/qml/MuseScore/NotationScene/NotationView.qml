@@ -29,7 +29,6 @@ import QtQuick.Controls
 import Muse.Ui
 import Muse.UiComponents
 import MuseScore.NotationScene
-import MuseScore.Braille
 import MuseScore.Playback
 
 import "internal"
@@ -44,7 +43,7 @@ FocusScope {
     property alias paintView: notationView
 
     property alias isNavigatorVisible: notationNavigator.visible
-    property alias isBraillePanelVisible: brailleViewLoader.active
+    property bool isBraillePanelVisible: false
     property alias isMainView: notationView.isMainView
 
     property alias defaultNavigationControl: fakeNavCtrl
@@ -79,6 +78,9 @@ FocusScope {
         NotationSwitchPanel {
             id: tabPanel
             Layout.fillWidth: true
+
+            // The score fills the window: open scores are switched from the Window menu
+            visible: false
 
             navigationPanel.section: navSec
             navigationPanel.order: 1
@@ -221,11 +223,6 @@ FocusScope {
                             notationView.onElementPopupIsOpenChanged(AbstractElementPopupModel.TYPE_UNDEFINED)
                         }
                     }
-
-                    NotationRegionsBeingProcessedView {
-                        notationViewRect: Qt.rect(notationView.x, notationView.y, notationView.width, notationView.height)
-                        notationViewMatrix: notationView.matrix
-                    }
                 }
 
                 onPinchToZoom: function(scale, pos) {
@@ -260,31 +257,6 @@ FocusScope {
                 function setCursorRect(viewport) {
                     if (navigatorItem) {
                         navigatorItem.setCursorRect(viewport)
-                    }
-                }
-            }
-
-            Loader {
-                id: brailleViewLoader
-
-                readonly property int navigationOrder: popUpLoader.navigationOrderEnd + 1
-
-                active: false
-                visible: active
-
-                SplitView.fillWidth: true
-                SplitView.preferredHeight: 50
-                SplitView.minimumHeight: 30
-
-                sourceComponent: BrailleView {
-                    navigationPanel.section: navSec
-                    navigationPanel.order: brailleViewLoader.navigationOrder
-
-                    navigationPanel.onActiveChanged: function (active) {
-                        if (active) {
-                            notationView.navigationPanel.setActive(false);
-                            fakeNavCtrl.setActive(false);
-                        }
                     }
                 }
             }
@@ -343,7 +315,7 @@ FocusScope {
             Layout.fillWidth: true
 
             navigationPanel.section: navSec
-            navigationOrderStart: brailleViewLoader.navigationOrder + 1
+            navigationOrderStart: popUpLoader.navigationOrderEnd + 1
 
             onClosed: {
                 fakeNavCtrl.requestActive()

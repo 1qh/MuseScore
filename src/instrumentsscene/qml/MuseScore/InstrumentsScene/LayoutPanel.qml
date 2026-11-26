@@ -37,6 +37,21 @@ Item {
 
     property alias contextMenuModel: contextMenuModel
 
+    function contentWidthHint(item) {
+        if (item.naturalWidth !== undefined) {
+            return item.naturalWidth
+        }
+        let result = 0
+        for (const child of item.children) {
+            result = Math.max(result, contentWidthHint(child))
+        }
+        return result
+    }
+    implicitWidth: Math.max(controlPanel.implicitWidth + 2 * contentColumn.sideMargin,
+                            contentWidthHint(layoutPanelTreeView.flickableItem.contentItem))
+    implicitHeight: controlPanel.implicitHeight + contentColumn.spacing
+                    + (layoutPanelTreeView.visible
+                       ? layoutPanelTreeView.flickableItem.count * layoutPanelTreeView.delegateHeight : emptyHint.implicitHeight + 12)
     onVisibleChanged: {
         treeModel.setLayoutPanelVisible(root.visible)
     }
@@ -123,6 +138,7 @@ Item {
         }
 
         StyledTextLabel {
+            id: emptyHint
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: 12
@@ -163,6 +179,8 @@ Item {
 
             alternatingRowColors: false
             headerVisible: false
+            flickableItem.displayMarginBeginning: flickableItem.contentHeight
+            flickableItem.displayMarginEnd: flickableItem.contentHeight
 
             function expandCollapseAll(expand) {
                 for (let row = 0; row < layoutPanelTreeView.model.rowCount(); ++row) {
@@ -206,6 +224,7 @@ Item {
 
             TableViewColumn {
                 role: "item"
+                width: Math.max(layoutPanelTreeView.width, root.implicitWidth)
             }
 
             function isControl(itemType) {
@@ -225,6 +244,7 @@ Item {
 
             itemDelegate: DropArea {
                 id: dropArea
+                readonly property real naturalWidth: treeItemDelegateLoader.item ? treeItemDelegateLoader.item.implicitWidth : 0
 
                 Loader {
                     id: treeItemDelegateLoader

@@ -74,12 +74,6 @@ engraving::InstrumentTrackIdSet PlaybackControllerStub::audibleInstrumentTrackId
     return {};
 }
 
-const IPlaybackController::AuxTrackIdMap& PlaybackControllerStub::auxTrackIdMap() const
-{
-    static const AuxTrackIdMap m;
-    return m;
-}
-
 muse::async::Channel<bool> PlaybackControllerStub::playbackInitedChanged() const
 {
     return {};
@@ -91,16 +85,6 @@ muse::async::Channel<muse::audio::TrackId> PlaybackControllerStub::trackAdded() 
 }
 
 muse::async::Channel<muse::audio::TrackId> PlaybackControllerStub::trackRemoved() const
-{
-    return {};
-}
-
-std::string PlaybackControllerStub::auxChannelName(muse::audio::aux_channel_idx_t) const
-{
-    return "";
-}
-
-muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> PlaybackControllerStub::auxChannelNameChanged() const
 {
     return {};
 }
@@ -212,20 +196,4 @@ void PlaybackControllerStub::setNotation(notation::INotationPtr)
 
 void PlaybackControllerStub::setIsExportingAudio(bool)
 {
-}
-
-const std::map<muse::audio::TrackId, muse::audio::AudioResourceMeta>& PlaybackControllerStub::onlineSounds() const
-{
-    static const std::map<muse::audio::TrackId, muse::audio::AudioResourceMeta> dummy;
-    return dummy;
-}
-
-muse::async::Notification PlaybackControllerStub::onlineSoundsChanged() const
-{
-    return {};
-}
-
-muse::Progress PlaybackControllerStub::onlineSoundsProcessingProgress() const
-{
-    return {};
 }

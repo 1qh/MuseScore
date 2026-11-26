@@ -27,7 +27,6 @@
 
 #include "modularity/ioc.h"
 #include "iappshellconfiguration.h"
-#include "update/iupdateconfiguration.h"
 #include "global/iglobalconfiguration.h"
 #include "global/iapplication.h"
 
@@ -41,7 +40,6 @@ class AboutModel : public QObject, public muse::Contextable
     QML_ELEMENT
 
     muse::GlobalInject<IAppShellConfiguration> configuration;
-    muse::GlobalInject<muse::update::IUpdateConfiguration> updateConfiguration;
     muse::GlobalInject<muse::IGlobalConfiguration> globalConfiguration;
     muse::ContextInject<muse::IApplication> application = { this };
 
@@ -50,10 +48,6 @@ public:
 
     Q_INVOKABLE QString museScoreVersion() const;
     Q_INVOKABLE QString museScoreRevision() const;
-    Q_INVOKABLE QVariantMap museScoreUrl() const;
-    Q_INVOKABLE QVariantMap museScoreForumUrl() const;
-    Q_INVOKABLE QVariantMap museScoreContributionUrl() const;
-    Q_INVOKABLE QVariantMap museScorePrivacyPolicyUrl() const;
 
     Q_INVOKABLE QVariantMap musicXMLLicenseUrl() const;
     Q_INVOKABLE QVariantMap musicXMLLicenseDeedUrl() const;

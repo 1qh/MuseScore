@@ -42,15 +42,42 @@ MacOSMainWindowBridge::MacOSMainWindowBridge(QObject* parent)
 {
 }
 
+//! The window's content runs under a transparent title bar with no title, so the window buttons sit over the app itself
+static void mergeTitleBar(QWindow* qWindow)
+{
+    NSWindow* nsWindow = nsWindowForQWindow(qWindow);
+    if (!nsWindow) {
+        return;
+    }
+
+    // Qt draws the app under the title bar and gives it no background; Qt has no hint for hiding the title text
+    qWindow->setFlag(Qt::ExpandedClientAreaHint, true);
+    qWindow->setFlag(Qt::NoTitleBarBackgroundHint, true);
+    nsWindow.titleVisibility = NSWindowTitleHidden;
+}
+
 void MacOSMainWindowBridge::init()
 {
     MainWindowBridge::init();
 
     uiConfiguration()->applyPlatformStyle(m_window);
+    mergeTitleBar(m_window);
 
     uiConfiguration()->currentThemeChanged().onNotify(this, [this]() {
         uiConfiguration()->applyPlatformStyle(m_window);
+        mergeTitleBar(m_window);
     });
+}
+
+void MacOSMainWindowBridge::fillScreen()
+{
+    NSWindow* nsWindow = nsWindowForQWindow(m_window);
+    if (!nsWindow) {
+        return;
+    }
+
+    NSScreen* screen = [nsWindow screen] ? [nsWindow screen] : [NSScreen mainScreen];
+    [nsWindow setFrame:[screen visibleFrame] display:YES animate:NO];
 }
 
 bool MacOSMainWindowBridge::fileModified() const

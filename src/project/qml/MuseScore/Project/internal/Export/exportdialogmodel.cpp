@@ -627,6 +627,7 @@ QVariantList ExportDialogModel::availableViewModes() const
     std::map<ViewMode, QString> viewModes {
         { ViewMode::PageFull, muse::qtrc("project/export", "Use page layout") },
         { ViewMode::Flexible, muse::qtrc("project/export", "Reflow to fit video resolution") },
+        { ViewMode::Practice, muse::qtrc("project/export", "Practice: keyboard and two systems (4K, 30 fps, HEVC)") },
     };
 
     QVariantList result;
@@ -649,6 +650,8 @@ void ExportDialogModel::setViewMode(ViewMode v)
 
     videoExportConfiguration()->setViewMode(v);
     emit viewModeChanged(v);
+    emit isPracticeVideoChanged();
+    emit videoResolutionChanged(videoResolution());
 }
 
 ExportDialogModel::ViewMode ExportDialogModel::viewMode() const
@@ -663,6 +666,11 @@ bool ExportDialogModel::isFFmpegAvailable() const
 #else
     return false;
 #endif
+}
+
+bool ExportDialogModel::isPracticeVideo() const
+{
+    return viewMode() == ViewMode::Practice;
 }
 
 QString ExportDialogModel::ffmpegDir() const

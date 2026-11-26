@@ -35,7 +35,6 @@
 #include "languages/ilanguagesconfiguration.h"
 #include "languages/ilanguagesservice.h"
 #include "shortcuts/ishortcutsconfiguration.h"
-#include "update/iupdateconfiguration.h"
 
 namespace mu::preferences {
 class GeneralPreferencesModel : public QObject, public muse::Contextable, public muse::async::Asyncable
@@ -59,16 +58,12 @@ class GeneralPreferencesModel : public QObject, public muse::Contextable, public
     Q_PROPERTY(QString startupScorePath READ startupScorePath WRITE setStartupScorePath NOTIFY startupScorePathChanged)
     Q_PROPERTY(QStringList scorePathFilter READ scorePathFilter CONSTANT)
 
-    Q_PROPERTY(bool showWelcomeDialog READ showWelcomeDialog WRITE setShowWelcomeDialog NOTIFY showWelcomeDialogChanged)
 
-    Q_PROPERTY(
-        bool needCheckForNewAppVersion READ needCheckForNewAppVersion WRITE setNeedCheckForNewAppVersion NOTIFY needCheckForNewAppVersionChanged)
 
     muse::GlobalInject<appshell::IAppShellConfiguration> configuration;
     muse::GlobalInject<muse::languages::ILanguagesConfiguration> languagesConfiguration;
     muse::GlobalInject<muse::shortcuts::IShortcutsConfiguration> shortcutsConfiguration;
     muse::GlobalInject<muse::languages::ILanguagesService> languagesService;
-    muse::GlobalInject<muse::update::IUpdateConfiguration> updateConfiguration;
     muse::ContextInject<muse::IInteractive> interactive = { this };
 
 public:
@@ -92,12 +87,6 @@ public:
     QString startupScorePath() const;
     QStringList scorePathFilter() const;
 
-    bool showWelcomeDialog() const;
-    void setShowWelcomeDialog(bool show);
-
-    bool needCheckForNewAppVersion() const;
-    Q_INVOKABLE bool isAppUpdatable() const;
-    Q_INVOKABLE QString museScorePrivacyPolicyUrl() const;
 
 public slots:
     void setCurrentLanguageCode(const QString& currentLanguageCode);
@@ -107,7 +96,6 @@ public slots:
     void setRestartRequired(bool restartRequired);
     void setCurrentStartupMode(int mode);
     void setStartupScorePath(const QString& scorePath);
-    void setNeedCheckForNewAppVersion(bool value);
 
 signals:
     void languagesChanged(QVariantList languages);
@@ -122,9 +110,7 @@ signals:
     void currentStartupModeChanged();
     void startupScorePathChanged();
 
-    void showWelcomeDialogChanged();
 
-    void needCheckForNewAppVersionChanged(bool value);
 
 private:
     muse::Progress m_languageUpdateProgress;

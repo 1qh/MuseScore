@@ -28,7 +28,6 @@ qt_add_qml_module(playback_qml
         PlaybackLoadingInfo.qml
         MixerPanel.qml
         SoundFlagPopup.qml
-        NotationRegionsBeingProcessedView.qml
     IMPORTS
         TARGET muse_ui_qml
         TARGET muse_uicomponents_qml

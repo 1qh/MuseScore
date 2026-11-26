@@ -29,7 +29,6 @@ FlatRadioButton {
     id: root
 
     property bool needSave: false
-    property bool isCloud: false
 
     property alias contextMenuItems: contextMenuLoader.items
 
@@ -58,11 +57,7 @@ FlatRadioButton {
             text: (root.needSave ? "*" : "") + root.text
         }
 
-        StyledIconLabel {
-            visible: root.isCloud
 
-            iconCode: IconCode.CLOUD
-        }
 
         FlatButton {
             Layout.preferredHeight: 20

@@ -100,7 +100,6 @@ Rectangle {
                 required property int index
                 required property string title
                 required needSave
-                required isCloud
 
                 navigation.name: "NotationTab" + index
                 navigation.panel: root.navigationPanel

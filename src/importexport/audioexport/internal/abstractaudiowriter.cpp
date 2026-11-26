@@ -140,18 +140,14 @@ Ret AbstractAudioWriter::doWriteAndWait(INotationPtr notation,
 
 void AbstractAudioWriter::doWrite(const QString& path, const SoundTrackFormat& format)
 {
-    const std::string processingOnlineSoundsMsg = trc("iex_audio", "Processing online sounds…");
-
     auto restoreState = [this]() {
         playbackController()->setIsExportingAudio(false);
         playbackController()->setNotation(globalContext()->currentNotation());
     };
 
-    auto sendProgress = [this, processingOnlineSoundsMsg](int64_t current, int64_t total, SaveSoundTrackStage stage) {
+    auto sendProgress = [this](int64_t current, int64_t total, SaveSoundTrackStage stage) {
         switch (stage) {
         case SaveSoundTrackStage::ProcessingOnlineSounds:
-            m_progress.progress(current, total, processingOnlineSoundsMsg);
-            break;
         case SaveSoundTrackStage::WritingSoundTrack:
         case SaveSoundTrackStage::Unknown:
             m_progress.progress(current, total);

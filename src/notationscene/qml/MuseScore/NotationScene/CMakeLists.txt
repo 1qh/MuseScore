@@ -22,7 +22,6 @@ muse_create_qml_module(notationscene_qml FOR notationscene)
 
 if (MUE_BUILD_BRAILLE_QML)
     set(MAYBE_BRAILLE_QML
-        TARGET braille_qml
     )
 else()
     set(MAYBE_BRAILLE_QML)

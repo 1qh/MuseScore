@@ -21,12 +21,33 @@
  */
 #pragma once
 
+#include <memory>
+
 #include "../../iappmenumodelhook.h"
+#include "async/asyncable.h"
+#include "context/iglobalcontext.h"
+#include "modularity/ioc.h"
 
 namespace mu::appshell {
-class MacOSAppMenuModelHook : public IAppMenuModelHook
+class MacOSAppMenuModelHook : public IAppMenuModelHook, public muse::Contextable, public muse::async::Asyncable
 {
+    muse::ContextInject<context::IGlobalContext> globalContext = { this };
+
 public:
+    explicit MacOSAppMenuModelHook(const muse::modularity::ContextPtr& iocCtx);
+    ~MacOSAppMenuModelHook() override;
+
     void onAppMenuInited() override;
+
+private:
+    void onCurrentProjectChanged();
+    void scheduleNativeMenuUpdate();
+    void updateNativeMenu();
+    void updateApplicationMenuTitle();
+
+    struct NativeMenuObserver;
+    muse::async::Asyncable m_projectSubscriptions;
+    std::unique_ptr<NativeMenuObserver> m_nativeMenuObserver;
+    bool m_inited = false;
 };
 }

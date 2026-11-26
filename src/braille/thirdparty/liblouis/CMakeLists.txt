@@ -1,6 +1,5 @@
 muse_create_thirdparty_module(liblouis)
 
-add_subdirectory(tables)
 
 target_compile_definitions(liblouis PRIVATE
     TABLESDIR=dataPathPtr           # compileTranslationTable.c

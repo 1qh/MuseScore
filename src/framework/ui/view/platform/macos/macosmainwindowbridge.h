@@ -40,6 +40,9 @@ public:
 
     bool fileModified() const override;
 
+    //! Size the window to the screen's visible area, as the Window menu's Fill does
+    Q_INVOKABLE void fillScreen();
+
 public slots:
     void setFileModified(bool modified) override;
 

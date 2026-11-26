@@ -30,8 +30,7 @@ target_sources(playback PRIVATE
 
     internal/playbackcontroller.cpp
     internal/playbackcontroller.h
-    internal/onlinesoundscontroller.cpp
-    internal/onlinesoundscontroller.h
+    internal/rememberedinputslot.h
     internal/playbackuiactions.cpp
     internal/playbackuiactions.h
     internal/playbackconfiguration.cpp

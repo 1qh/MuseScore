@@ -32,8 +32,6 @@ class ProjectActionsController;
 class RecentFilesController;
 class ProjectAutoSaver;
 class EngravingPluginAPIHelper;
-class ConvertFileToScoreScenario;
-class ConvertFileToScoreService;
 class ProjectModule : public muse::modularity::IModuleSetup
 {
 public:
@@ -42,7 +40,6 @@ public:
     void registerExports() override;
     void resolveImports() override;
     void onInit(const muse::IApplication::RunMode& mode) override;
-    void onDelayedInit() override;
 
 private:
     std::shared_ptr<ProjectConfiguration> m_configuration;
@@ -50,7 +47,5 @@ private:
     std::shared_ptr<RecentFilesController> m_recentFilesController;
     std::shared_ptr<ProjectAutoSaver> m_projectAutoSaver;
     std::shared_ptr<EngravingPluginAPIHelper> m_engravingPluginAPIHelper;
-    std::shared_ptr<ConvertFileToScoreScenario> m_convertFileToScoreScenario;
-    std::shared_ptr<ConvertFileToScoreService> m_convertFileToScoreService;
 };
 }

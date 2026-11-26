@@ -29,7 +29,6 @@ using namespace mu::notation;
 using namespace muse;
 using namespace muse::actions;
 
-static const muse::Uri NOTATION_REVIEW_PAGE_URI("musescore://notation/review");
 
 void InstrumentsActionsController::init()
 {
@@ -43,7 +42,7 @@ bool InstrumentsActionsController::canReceiveAction(const ActionCode&) const
         return false;
     }
 
-    return interactive()->currentUri().val != NOTATION_REVIEW_PAGE_URI;
+    return true;
 }
 
 void InstrumentsActionsController::selectInstruments()

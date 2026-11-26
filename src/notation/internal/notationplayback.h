@@ -58,9 +58,13 @@ public:
     std::vector<muse::midi::note_idx_t> activePlaybackPitches(
         muse::audio::secs_t position, const engraving::InstrumentTrackIdSet& includedTracks) const override;
 
+    std::vector<engraving::InstrumentTrackIdSet> playbackTrackLayers(
+        const engraving::InstrumentTrackIdSet& includedTracks) const override;
+
     void triggerEventsForItems(const std::vector<const EngravingItem*>& items, muse::mpe::duration_t duration, bool flushSound) override;
     void triggerMetronome(muse::midi::tick_t tick) override;
     void triggerCountIn(muse::midi::tick_t tick, muse::secs_t& countInDuration) override;
+    muse::secs_t setExportCountIn(bool enabled) override;
     void triggerControllers(const muse::mpe::ControllerChangeEventList& list, notation::staff_idx_t staffIdx, int tick) override;
 
     engraving::InstrumentTrackIdSet existingTrackIdSet() const override;
@@ -115,6 +119,7 @@ private:
     muse::async::Notification m_loopBoundariesChanged;
 
     muse::audio::secs_t m_totalPlayTime = 0;
+    muse::secs_t m_exportCountInDuration = 0;
     muse::async::Channel<muse::audio::secs_t> m_totalPlayTimeChanged;
 
     mutable Tempo m_currentTempo;

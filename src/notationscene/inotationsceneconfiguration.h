@@ -29,6 +29,8 @@
 #include "notationscenetypes.h"
 
 namespace mu::notation {
+inline constexpr int DEFAULT_PIANO_KEYBOARD_NUMBER_OF_KEYS = 61;
+
 class INotationSceneConfiguration : MODULE_GLOBAL_INTERFACE
 {
     INTERFACE_ID(INotationSceneConfiguration)

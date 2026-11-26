@@ -193,13 +193,9 @@ TEST_F(Project_RecentScoresModelTest, Load_ItemFields)
     .WillByDefault(ReturnRefOfCopy(RecentFilesList { RecentFile("/scores/a.mscz", "My score"),
                                                      RecentFile("/scores/b.musicxml") }));
 
-    // [GIVEN] The score is a cloud score with a known file size
+    // [GIVEN] The score has a known file size
     ON_CALL(*m_fileSystem, fileSize(io::path_t("/scores/a.mscz")))
     .WillByDefault(Return(RetVal<uint64_t>::make_ok(2048)));
-    ON_CALL(*m_configuration, isCloudProject(io::path_t("/scores/a.mscz")))
-    .WillByDefault(Return(true));
-    ON_CALL(*m_configuration, cloudScoreIdFromPath(io::path_t("/scores/a.mscz")))
-    .WillByDefault(Return(7));
 
     // [WHEN] Loading the model
     m_model.load();
@@ -212,8 +208,8 @@ TEST_F(Project_RecentScoresModelTest, Load_ItemFields)
     EXPECT_EQ(cloudScore.value("path").toString(), "/scores/a.mscz");
     EXPECT_EQ(cloudScore.value("suffix").toString(), "mscz");
     EXPECT_EQ(cloudScore.value("fileSize").toString(), DataFormatter::formatFileSize(2048).toQString());
-    EXPECT_TRUE(cloudScore.value("isCloud").toBool());
-    EXPECT_EQ(cloudScore.value("scoreId").toInt(), 7);
+    EXPECT_FALSE(cloudScore.contains("isCloud"));
+    EXPECT_FALSE(cloudScore.contains("scoreId"));
     EXPECT_FALSE(cloudScore.value("isCreateNew").toBool());
     EXPECT_FALSE(cloudScore.value("isNoResultsFound").toBool());
 

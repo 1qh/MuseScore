@@ -37,25 +37,13 @@ FocusScope {
     property string thumbnailUrl: ""
     property bool isCreateNew: false
     property bool isNoResultsFound: false
-    property var processingStatus: undefined
-    readonly property bool isProcessing: root.processingStatus !== undefined
-    property int convertType: 0
-    property int convertId: 0
-    property var uploadId: undefined
-    property bool isCloud: false
-    property int cloudScoreId: 0
     property bool showRemoveFromRecentFiles: false
 
     property alias navigation: navCtrl
 
     signal clicked()
     signal revealInFileBrowserRequested(string scorePath)
-    signal viewOnlineRequested(int scoreId)
     signal removeFromRecentFilesRequested(string scorePath)
-    signal deleteScoreRequested(int scoreId, string scoreName)
-    signal retryRequested()
-    signal cancelUploadRequested(int uploadId)
-    signal cancelConversionRequested(int convertType, int convertId)
 
     NavigationControl {
         id: navCtrl
@@ -63,19 +51,7 @@ FocusScope {
         enabled: root.enabled && root.visible
 
         accessible.role: MUAccessible.Button
-        accessible.name: {
-            if (root.isProcessing) {
-                if (root.processingStatus === ScoreProcessingPlaceholder.Failed) {
-                    //: %1 is the name of the score whose conversion failed
-                    return qsTrc("project/convert", "Processing failed: %1").arg(root.name)
-                }
-
-                //: %1 is the name of the score being converted
-                return qsTrc("project", "Processing %1").arg(root.name)
-            }
-
-            return root.name
-        }
+        accessible.name: root.name
 
         onActiveChanged: function(active) {
             if (active) {
@@ -94,7 +70,7 @@ FocusScope {
         id: rootMouseArea
         anchors.fill: parent
 
-        enabled: root.enabled && !root.isProcessing
+        enabled: root.enabled
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton
 
@@ -133,9 +109,7 @@ FocusScope {
                             return createNewComp
                         }
 
-                        if (root.isProcessing) {
-                            return processingComp
-                        }
+
 
                         if (root.isNoResultsFound) {
                             return noResultFoundComp
@@ -223,12 +197,11 @@ FocusScope {
                                                    || contextMenu.navigation.active
                                                    || contextMenu.isMenuOpenedByButton
 
-                visible: contextMenu.menuModel.length > 0 && !root.isProcessing && contextMenu.isHovered
+                visible: contextMenu.menuModel.length > 0 && contextMenu.isHovered
                 transparent: !contextMenu.isMenuOpenedByButton && !rootMouseArea.containsMouse
 
                 isCreateNew: root.isCreateNew
                 isNoResultsFound: root.isNoResultsFound
-                isCloud: root.isCloud
                 showRemoveFromRecentFiles: root.showRemoveFromRecentFiles
 
                 navigation.panel: root.navigation.panel
@@ -236,70 +209,11 @@ FocusScope {
                 navigation.column: root.navigation.column + 1
 
                 onOpenRequested: root.clicked()
-                onViewOnlineRequested: root.viewOnlineRequested(root.cloudScoreId)
                 onRevealInFileBrowserRequested: root.revealInFileBrowserRequested(root.path)
                 onRemoveFromRecentFilesRequested: root.removeFromRecentFilesRequested(root.path)
-                onDeleteScoreRequested: root.deleteScoreRequested(root.cloudScoreId, root.name)
             }
 
-            Loader {
-                active: root.isCloud
 
-                anchors.left: parent.left
-                anchors.leftMargin: 8
-                anchors.right: parent.right
-                anchors.rightMargin: 8
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 8
-
-                sourceComponent: RowLayout {
-                    visible: root.isCloud
-
-                    spacing: 8
-
-                    CloudScoreStatusWatcher {
-                        id: cloudScoreStatusWatcher
-                    }
-
-                    Component.onCompleted: {
-                        cloudScoreStatusWatcher.load(root.cloudScoreId)
-                    }
-
-                    ProgressBar {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 16
-
-                        visible: cloudScoreStatusWatcher.isProgress
-
-                        from: 0
-                        to: cloudScoreStatusWatcher.progressTotal
-                        value: cloudScoreStatusWatcher.progressCurrent
-
-                        navigation.panel: root.navigation.panel
-                        navigation.row: root.navigation.row
-                        navigation.column: root.navigation.column + 2
-                    }
-
-                    CloudScoreIndicatorButton {
-                        Layout.alignment: Qt.AlignTrailing | Qt.AlignVCenter
-
-                        isProgress: cloudScoreStatusWatcher.isProgress
-                        isDownloadedAndUpToDate: cloudScoreStatusWatcher.isDownloadedAndUpToDate
-
-                        navigation.panel: root.navigation.panel
-                        navigation.row: root.navigation.row
-                        navigation.column: root.navigation.column + 3
-
-                        onClicked: {
-                            if (isProgress) {
-                                cloudScoreStatusWatcher.cancel()
-                            } else {
-                                root.clicked()
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         Column {
@@ -327,7 +241,7 @@ FocusScope {
 
                 font.capitalization: Font.AllUppercase
 
-                visible: !root.isCreateNew && !root.isNoResultsFound && !root.isProcessing
+                visible: !root.isCreateNew && !root.isNoResultsFound
             }
         }
     }
@@ -350,27 +264,7 @@ FocusScope {
         }
     }
 
-    Component {
-        id: processingComp
 
-        ScoreProcessingPlaceholder {
-            status: root.processingStatus
-            iconSize: 24
-
-            navigationPanel: root.navigation.panel
-            navigationRow: root.navigation.row
-            navigationColumn: root.navigation.column + 2
-
-            onRetryRequested: root.retryRequested()
-            onCancelRequested: {
-                if (Boolean(root.uploadId)) {
-                    root.cancelUploadRequested(root.uploadId)
-                } else {
-                    root.cancelConversionRequested(root.convertType, root.convertId)
-                }
-            }
-        }
-    }
 
     Component {
         id: noResultFoundComp

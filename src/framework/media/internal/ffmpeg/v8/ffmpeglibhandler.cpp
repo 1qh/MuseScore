@@ -87,6 +87,7 @@ bool FFmpegLibHandler::loadApi()
     RESOLVE_FROM(m_avCodecLibrary, av_packet_rescale_ts);
     RESOLVE_FROM(m_avCodecLibrary, avcodec_alloc_context3);
     RESOLVE_FROM(m_avCodecLibrary, avcodec_find_encoder);
+    RESOLVE_FROM(m_avCodecLibrary, avcodec_find_encoder_by_name);
     RESOLVE_FROM(m_avCodecLibrary, avcodec_find_decoder);
     RESOLVE_FROM(m_avCodecLibrary, avcodec_free_context);
     RESOLVE_FROM(m_avCodecLibrary, avcodec_open2);
@@ -206,6 +207,7 @@ void FFmpegLibHandler::clearFunctions()
     avio_context_free = nullptr;
     avcodec_alloc_context3 = nullptr;
     avcodec_find_encoder = nullptr;
+    avcodec_find_encoder_by_name = nullptr;
     avcodec_find_decoder = nullptr;
     avcodec_free_context = nullptr;
     avcodec_open2 = nullptr;

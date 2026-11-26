@@ -28,6 +28,7 @@
 
 #include "modularity/ioc.h"
 #include "notation/inotationconfiguration.h"
+#include "notation/inotationplayback.h"
 #include "ui/iuiconfiguration.h"
 
 #include "pianokeyboardtypes.h"
@@ -41,6 +42,7 @@ class PianoKeyboardView : public muse::uicomponents::QuickPaintedView, public mu
 
     Q_PROPERTY(int numberOfKeys READ numberOfKeys WRITE setNumberOfKeys NOTIFY numberOfKeysChanged)
     Q_PROPERTY(qreal keyWidthScaling READ keyWidthScaling WRITE setScaling NOTIFY keyWidthScalingChanged)
+    Q_PROPERTY(qreal fittedHeight READ fittedHeight NOTIFY fittedHeightChanged)
 
     Q_PROPERTY(qreal scrollBarPosition READ scrollBarPosition WRITE setScrollBarPosition NOTIFY scrollBarChanged)
     Q_PROPERTY(qreal scrollBarSize READ scrollBarSize NOTIFY scrollBarChanged)
@@ -55,7 +57,10 @@ public:
     Q_INVOKABLE void init();
 
     void paint(QPainter* painter) override;
+    void paintPlayback(QPainter* painter, const INotationPlaybackPtr& playback,
+                       const engraving::InstrumentTrackIdSet& tracks, std::optional<muse::audio::secs_t> position);
 
+    qreal fittedHeight() const;
     int numberOfKeys() const;
     void setNumberOfKeys(int number);
 
@@ -70,6 +75,7 @@ public:
 signals:
     void numberOfKeysChanged();
     void keyWidthScalingChanged();
+    void fittedHeightChanged();
 
     void scrollBarChanged();
 
@@ -118,6 +124,7 @@ private:
     std::map<KeyState, QColor> m_blackKeyBottomPieceStateColors;
 
     qreal m_keyWidthScaling = 1.0;
+    qreal m_fittedHeight = 0.0;
     qreal m_scrollOffset = 0.0;
     qreal m_spacing = 0.0;
 

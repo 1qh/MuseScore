@@ -56,12 +56,6 @@ class AudioMidiPreferencesModel : public QObject, public muse::Contextable, publ
     Q_PROPERTY(bool muteHiddenInstruments READ muteHiddenInstruments WRITE setMuteHiddenInstruments NOTIFY muteHiddenInstrumentsChanged)
 
     Q_PROPERTY(
-        bool shouldShowOnlineSoundsProcessingError READ shouldShowOnlineSoundsProcessingError WRITE setShouldShowOnlineSoundsProcessingError NOTIFY shouldShowOnlineSoundsProcessingErrorChanged)
-    Q_PROPERTY(
-        bool autoProcessOnlineSoundsInBackground READ autoProcessOnlineSoundsInBackground WRITE setAutoProcessOnlineSoundsInBackground NOTIFY autoProcessOnlineSoundsInBackgroundChanged)
-    Q_PROPERTY(
-        int onlineSoundsShowProgressBarMode READ onlineSoundsShowProgressBarMode WRITE setOnlineSoundsShowProgressBarMode NOTIFY onlineSoundsShowProgressBarModeChanged)
-    Q_PROPERTY(
         bool useSoundFontLowPassFilter READ useSoundFontLowPassFilter WRITE setUseSoundFontLowPassFilter NOTIFY useSoundFontLowPassFilterChanged)
 
     muse::GlobalInject<muse::audio::IAudioConfiguration> audioConfiguration;
@@ -89,8 +83,6 @@ public:
 
     Q_INVOKABLE void restartAudioAndMidiDevices();
 
-    Q_INVOKABLE bool onlineSoundsSectionVisible() const;
-
     QVariantList midiInputDevices() const;
     QVariantList midiOutputDevices() const;
 
@@ -99,9 +91,6 @@ public:
 
     bool muteHiddenInstruments() const;
 
-    bool shouldShowOnlineSoundsProcessingError() const;
-    bool autoProcessOnlineSoundsInBackground() const;
-    int onlineSoundsShowProgressBarMode() const;
     bool useSoundFontLowPassFilter() const;
 
 public slots:
@@ -111,9 +100,6 @@ public slots:
 
     void setMuteHiddenInstruments(bool mute);
 
-    void setShouldShowOnlineSoundsProcessingError(bool value);
-    void setAutoProcessOnlineSoundsInBackground(bool value);
-    void setOnlineSoundsShowProgressBarMode(int mode);
     void setUseSoundFontLowPassFilter(bool value);
 
 signals:
@@ -128,9 +114,6 @@ signals:
 
     void muteHiddenInstrumentsChanged(bool mute);
 
-    void shouldShowOnlineSoundsProcessingErrorChanged();
-    void autoProcessOnlineSoundsInBackgroundChanged();
-    void onlineSoundsShowProgressBarModeChanged();
     void useSoundFontLowPassFilterChanged();
 
 private:

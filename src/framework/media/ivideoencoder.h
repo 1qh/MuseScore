@@ -46,6 +46,7 @@ public:
         unsigned bitrate = static_cast<unsigned>(-1);
         unsigned gop = static_cast<unsigned>(-1);
         unsigned fps = static_cast<unsigned>(-1);
+        bool hevcVideoToolbox = false;
     };
 
     virtual bool open(const muse::io::path_t& fileName, const Options& options) = 0;

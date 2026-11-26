@@ -64,14 +64,6 @@ public:
     void setMixerSectionVisible(MixerSectionType sectionType, bool visible) override;
     muse::async::Channel<MixerSectionType, bool> isMixerSectionVisibleChanged() const override;
 
-    bool isAuxSendVisible(muse::audio::aux_channel_idx_t index) const override;
-    void setAuxSendVisible(muse::audio::aux_channel_idx_t index, bool visible) override;
-    muse::async::Channel<muse::audio::aux_channel_idx_t, bool> isAuxSendVisibleChanged() const override;
-
-    bool isAuxChannelVisible(muse::audio::aux_channel_idx_t index) const override;
-    void setAuxChannelVisible(muse::audio::aux_channel_idx_t index, bool visible) const override;
-    muse::async::Channel<muse::audio::aux_channel_idx_t, bool> isAuxChannelVisibleChanged() const override;
-
     muse::audio::gain_t defaultAuxSendValue(muse::audio::aux_channel_idx_t index, muse::audio::AudioSourceType sourceType,
                                             const muse::String& instrumentSoundId) const override;
 
@@ -95,15 +87,8 @@ public:
     bool needToShowResetSoundFlagsWhenChangePlaybackProfileWarning() const override;
     void setNeedToShowResetSoundFlagsWhenChangePlaybackProfileWarning(bool show) override;
 
-    bool shouldShowOnlineSoundsProcessingError() const override;
-    void setShouldShowOnlineSoundsProcessingError(bool show) override;
-    muse::async::Notification shouldShowOnlineSoundsProcessingErrorChanged() const override;
-
-    OnlineSoundsShowProgressBarMode onlineSoundsShowProgressBarMode() const override;
-    void setOnlineSoundsShowProgressBarMode(OnlineSoundsShowProgressBarMode mode) override;
-    muse::async::Notification onlineSoundsShowProgressBarModeChanged() const override;
-
-    muse::String onlineSoundsHandbookUrl() const override;
+    muse::audio::AudioInputParams rememberedTrackInputParams(const std::string& slot) const override;
+    void setRememberedTrackInputParams(const std::string& slot, const muse::audio::AudioInputParams& params) override;
 
     bool shouldMeasureInputLag() const override;
 
@@ -111,13 +96,9 @@ private:
     const SoundProfileName& fallbackSoundProfileStr() const;
 
     muse::async::Notification m_playNotesWhenEditingChanged;
-    muse::async::Notification m_shouldShowOnlineSoundsProcessingErrorChanged;
-    muse::async::Notification m_onlineSoundsShowProgressBarModeChanged;
     muse::async::Channel<bool> m_playChordWhenEditingChanged;
     muse::async::Channel<bool> m_playHarmonyWhenEditingChanged;
     muse::async::Channel<bool> m_playNotesOnMidiInputChanged;
-    muse::async::Channel<muse::audio::aux_channel_idx_t, bool> m_isAuxSendVisibleChanged;
-    muse::async::Channel<muse::audio::aux_channel_idx_t, bool> m_isAuxChannelVisibleChanged;
     muse::async::Channel<MixerSectionType, bool> m_isMixerSectionVisibleChanged;
 
     muse::async::Channel<bool> m_muteHiddenInstrumentsChanged;

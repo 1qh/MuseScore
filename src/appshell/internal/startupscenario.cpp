@@ -19,7 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 #include "startupscenario.h"
 
 #include <QCoreApplication>
@@ -35,8 +34,6 @@ using namespace mu::appshell;
 using namespace muse;
 using namespace muse::actions;
 
-static const muse::UriQuery FIRST_LAUNCH_SETUP_URI("musescore://firstLaunchSetup?floating=true");
-static const muse::UriQuery WELCOME_DIALOG_URI("musescore://welcomedialog");
 
 static StartupModeType modeTypeTromString(const std::string& str)
 {
@@ -59,19 +56,10 @@ static StartupModeType modeTypeTromString(const std::string& str)
     return StartupModeType::StartEmpty;
 }
 
-static const Uri& startupPageUri(StartupModeType modeType)
+static const Uri& startupPageUri([[maybe_unused]] StartupModeType modeType)
 {
-    switch (modeType) {
-    case StartupModeType::StartEmpty:
-    case StartupModeType::StartWithNewScore:
-    case StartupModeType::Recovery:
-        return HOME_URI;
-    case StartupModeType::StartWithScore:
-    case StartupModeType::ContinueLastSession:
-        return NOTATION_URI;
-    }
-
-    return HOME_URI;
+    // The app has no home page: every start lands on the score page
+    return NOTATION_URI;
 }
 
 void StartupScenario::setStartupType(const std::optional<std::string>& type)
@@ -105,20 +93,6 @@ void StartupScenario::setStartupScoreFile(const std::optional<project::ProjectFi
 void StartupScenario::runOnSplashScreen()
 {
     TRACEFUNC;
-
-    if (multiwindowsProvider()->windowCount() != 1) {
-        registerAudioPlugins();
-        return;
-    }
-
-    if (appUpdateScenario() && appUpdateScenario()->needCheckForUpdate()) {
-        appUpdateScenario()->checkForUpdate(/*manual*/ false);
-    }
-
-    if (museSoundsUpdateScenario() && museSoundsUpdateScenario()->needCheckForUpdate()) {
-        museSoundsUpdateScenario()->checkForUpdate(/*manual*/ false);
-    }
-
     registerAudioPlugins();
 }
 
@@ -218,106 +192,6 @@ void StartupScenario::onStartupPageOpened(StartupModeType modeType)
     } break;
     }
 
-    m_activeUpdateCheckCount = 0;
-
-    if (appUpdateScenario() && appUpdateScenario()->checkInProgress()) {
-        m_activeUpdateCheckCount++;
-        appUpdateScenario()->checkInProgressChanged().onNotify(this, [this, modeType]() {
-            appUpdateScenario()->checkInProgressChanged().disconnect(this);
-            m_activeUpdateCheckCount--;
-            showStartupDialogsIfNeed(modeType);
-        }, Asyncable::Mode::SetReplace);
-    }
-
-    if (museSoundsUpdateScenario() && museSoundsUpdateScenario()->checkInProgress()) {
-        m_activeUpdateCheckCount++;
-        museSoundsUpdateScenario()->checkInProgressChanged().onNotify(this, [this, modeType]() {
-            museSoundsUpdateScenario()->checkInProgressChanged().disconnect(this);
-            m_activeUpdateCheckCount--;
-            showStartupDialogsIfNeed(modeType);
-        }, Asyncable::Mode::SetReplace);
-    }
-
-    showStartupDialogsIfNeed(modeType);
-}
-
-void StartupScenario::showStartupDialogsIfNeed(StartupModeType modeType)
-{
-    TRACEFUNC;
-
-    if (m_activeUpdateCheckCount != 0) {
-        return;
-    }
-
-    //! NOTE: The welcome dialog should not show if the first launch setup has not been completed, or if we're going
-    //! to show a MuseSounds update dialog (see ProjectActionsController::doFinishOpenProject). MuseSampler's update
-    //! dialog should be shown after the welcome dialog.
-    const auto showWelcomeDialogAndSamplerUpdateIfNeed = [this, modeType]() {
-        if (!configuration()->hasCompletedFirstLaunchSetup()) {
-            interactive()->open(FIRST_LAUNCH_SETUP_URI);
-            return;
-        }
-
-        const Version welcomeDialogLastShownVersion(configuration()->welcomeDialogLastShownVersion());
-        const Version currentMuseScoreVersion(configuration()->museScoreVersion());
-        if (welcomeDialogLastShownVersion < currentMuseScoreVersion) {
-            configuration()->setWelcomeDialogShowOnStartup(true); // override user preference
-            configuration()->setWelcomeDialogLastShownIndex(-1); // reset
-        }
-
-        const bool shouldCheckForMuseSamplerUpdate = modeType == StartupModeType::StartEmpty
-                                                     || modeType == StartupModeType::StartWithNewScore;
-
-        if (shouldShowWelcomeDialog(modeType)) {
-            interactive()->open(WELCOME_DIALOG_URI).onResolve(this, [this, shouldCheckForMuseSamplerUpdate](const Val&) {
-                configuration()->setWelcomeDialogLastShownVersion(configuration()->museScoreVersion());
-
-                if (shouldCheckForMuseSamplerUpdate) {
-                    checkAndShowMuseSamplerStatusIfNeed();
-                }
-            });
-        } else if (shouldCheckForMuseSamplerUpdate) {
-            checkAndShowMuseSamplerStatusIfNeed();
-        }
-    };
-
-    if (!appUpdateScenario() || !appUpdateScenario()->hasUpdate()) {
-        showWelcomeDialogAndSamplerUpdateIfNeed();
-        return;
-    }
-
-    auto promise = appUpdateScenario()->showUpdate();
-    promise.onResolve(this, [showWelcomeDialogAndSamplerUpdateIfNeed](const Ret& ret) {
-        if (ret.code() == static_cast<int>(Ret::Code::Ok)) {
-            return; // OK means the user wants to close and complete installation - don't show any more dialogs...
-        }
-        showWelcomeDialogAndSamplerUpdateIfNeed();
-    });
-}
-
-bool StartupScenario::shouldShowWelcomeDialog(StartupModeType modeType) const
-{
-    if (!configuration()->welcomeDialogShowOnStartup()) {
-        return false;
-    }
-
-    if (multiwindowsProvider()->windowCount() != 1) {
-        return false;
-    }
-
-    if (museSoundsUpdateScenario() && museSoundsUpdateScenario()->hasUpdate()) {
-        return false;
-    }
-
-    const Uri& startupUri = startupPageUri(modeType);
-    return interactive()->currentUri().val == startupUri;
-}
-
-void StartupScenario::checkAndShowMuseSamplerStatusIfNeed()
-{
-    if (museSamplerCheckStatusScenario() && !museSamplerCheckStatusScenario()->alreadyChecked()) {
-        museSamplerCheckStatusScenario()->checkAndShowStatusIfNeed();
-    }
 }
 
 void StartupScenario::openScore(const project::ProjectFile& file)
@@ -337,7 +211,6 @@ void StartupScenario::restoreLastSession()
         } else {
             removeProjectsUnsavedChanges(configuration()->sessionProjectsPaths());
             sessionsManager()->reset();
-            checkAndShowMuseSamplerStatusIfNeed();
         }
     });
 }

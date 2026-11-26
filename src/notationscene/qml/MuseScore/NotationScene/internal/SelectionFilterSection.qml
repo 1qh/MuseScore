@@ -31,6 +31,13 @@ Column {
     property alias navigation: navPanel
     property alias sectionTitle: title.text
 
+    readonly property real naturalWidth: {
+        let result = title.implicitWidth
+        for (const child of children) {
+            result = Math.max(result, child.implicitWidth)
+        }
+        return result
+    }
     width: parent.width
     spacing: 8
 

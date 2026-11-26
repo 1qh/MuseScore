@@ -386,7 +386,9 @@ void DockWindow::loadTopLevelToolBars(const DockPageView* page)
     for (DockToolBarView* toolBar : allToolBars) {
         auto location = prevToolBar ? Location::Right : Location::Top;
         addDock(toolBar, location, prevToolBar);
-        prevToolBar = toolBar;
+        if (!toolBar->defaultFloating()) {
+            prevToolBar = toolBar;
+        }
     }
 }
 
@@ -489,12 +491,20 @@ void DockWindow::addDock(DockBase* dock, Location location, const DockBase* rela
 
     KDDockWidgets::DockWidgetBase* relativeDock = relativeTo ? relativeTo->dockWidget() : nullptr;
 
-    auto visibilityOption = dock->defaultVisibility() ? KDDockWidgets::InitialVisibilityOption::StartVisible
+    const bool floating = dock->defaultFloating() && dock->floatable();
+    auto visibilityOption = (dock->defaultVisibility() || floating) ? KDDockWidgets::InitialVisibilityOption::StartVisible
                             : KDDockWidgets::InitialVisibilityOption::StartHidden;
 
     KDDockWidgets::InitialOption options(visibilityOption, dock->preferredSize());
 
     m_mainWindow->addDockWidget(dock->dockWidget(), locationToKLocation(location), relativeDock, options);
+    dock->m_fitContentPending = floating && dock->type() == DockType::Panel;
+    if (floating) {
+        dock->setFloating(true);
+        if (!dock->defaultVisibility()) {
+            dock->close();
+        }
+    }
 }
 
 void DockWindow::addPanelAsTab(DockPanelView* panel, DockPanelView* destinationPanel)
@@ -626,6 +636,7 @@ void DockWindow::restorePageState(const DockPageView* page)
     QSet<DockBase*> unknownDocks;
     if (!layoutIsEmpty) {
         for (DockBase* dock : page->allDocks()) {
+            dock->m_fitContentPending = false;
             const KDDockWidgets::DockWidgetBase* dockWidget = dock->dockWidget();
             if (!pageStateValNt.val.contains(dockWidget->uniqueName().toLocal8Bit())) {
                 unknownDocks.insert(dock);

@@ -131,7 +131,7 @@ Ret NotationProject::load(const muse::io::path_t& path, const OpenParams& openPa
         return ret;
     }
 
-    bool treatAsImported = (m_masterNotation->mscVersion() < 400 && !isCloudProject()) || format == MSCZ_BACKUP;
+    bool treatAsImported = m_masterNotation->mscVersion() < 400 || format == MSCZ_BACKUP;
 
     listenIfNeedSaveChanges();
     setNeedSave(treatAsImported);
@@ -225,18 +225,6 @@ Ret NotationProject::doLoad(const muse::io::path_t& path, const OpenParams& open
         if (!ret) {
             m_projectAudioSettings->makeDefault();
             tryCompatAudio = true;
-        }
-    }
-
-    // Load cloud info
-    {
-        m_cloudInfo.sourceUrl = masterScore->metaTags()[SOURCE_TAG].toQString();
-        m_cloudInfo.revisionId = masterScore->metaTags()[SOURCE_REVISION_ID_TAG].toInt();
-
-        m_cloudAudioInfo.url = masterScore->metaTags()[AUDIO_COM_URL_TAG].toQString();
-
-        if (configuration()->isLegacyCloudProject(path)) {
-            m_cloudInfo.name = io::filename(path, false).toQString();
         }
     }
 
@@ -445,9 +433,7 @@ QString NotationProject::displayName() const
         return io::filename(m_path).toQString();
     }
 
-    if (isCloudProject()) {
-        return m_cloudInfo.name;
-    }
+
 
     bool isSuffixInteresting = io::suffix(m_path) != engraving::MSCZ;
     return io::filename(m_path, isSuffixInteresting).toQString();
@@ -456,36 +442,6 @@ QString NotationProject::displayName() const
 muse::async::Notification NotationProject::displayNameChanged() const
 {
     return m_displayNameChanged;
-}
-
-bool NotationProject::isCloudProject() const
-{
-    return configuration()->isCloudProject(m_path);
-}
-
-const CloudProjectInfo& NotationProject::cloudInfo() const
-{
-    return m_cloudInfo;
-}
-
-void NotationProject::setCloudInfo(const CloudProjectInfo& info)
-{
-    m_cloudInfo = info;
-    m_masterNotation->masterScore()->setMetaTag(SOURCE_TAG, info.sourceUrl.toString());
-    m_masterNotation->masterScore()->setMetaTag(SOURCE_REVISION_ID_TAG, String::number(info.revisionId));
-
-    m_displayNameChanged.notify();
-}
-
-const CloudAudioInfo& NotationProject::cloudAudioInfo() const
-{
-    return m_cloudAudioInfo;
-}
-
-void NotationProject::setCloudAudioInfo(const CloudAudioInfo& audioInfo)
-{
-    m_cloudAudioInfo = audioInfo;
-    m_masterNotation->masterScore()->setMetaTag(AUDIO_COM_URL_TAG, audioInfo.url.toString());
 }
 
 Ret NotationProject::save(const muse::io::path_t& path, SaveMode saveMode, bool createBackup)
@@ -1027,10 +983,7 @@ void NotationProject::markAsUnsaved()
 
 void NotationProject::listenIfNeedSaveChanges()
 {
-    if (isCloudProject()) {
-        //! NOTE: master is always open once loaded; set before listening so it doesn't count as a change
-        m_masterNotation->notation()->setIsOpen(true);
-    }
+
 
     m_masterNotation->notation()->undoStack()->changesChannel().onReceive(this, [this](const ScoreChanges&) {
         bool isStackClean = m_masterNotation && m_masterNotation->notation()->undoStack()->isStackClean();

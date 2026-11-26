@@ -25,7 +25,6 @@ using namespace mu;
 using namespace mu::notation;
 using namespace mu::engraving;
 using namespace muse;
-using namespace muse::midi;
 using namespace muse::async;
 
 NotationPlaybackStub::NotationPlaybackStub()
@@ -81,6 +80,11 @@ std::vector<muse::midi::note_idx_t> NotationPlaybackStub::activePlaybackPitches(
     return {};
 }
 
+std::vector<InstrumentTrackIdSet> NotationPlaybackStub::playbackTrackLayers(const InstrumentTrackIdSet&) const
+{
+    return {};
+}
+
 void NotationPlaybackStub::triggerEventsForItems(const std::vector<const EngravingItem*>&, muse::mpe::duration_t, bool)
 {
 }
@@ -112,6 +116,11 @@ muse::async::Channel<InstrumentTrackId> NotationPlaybackStub::trackRemoved() con
     return muse::async::Channel<InstrumentTrackId>();
 }
 
+muse::secs_t NotationPlaybackStub::setExportCountIn(bool enabled)
+{
+    return enabled ? -1 : 0;
+}
+
 muse::audio::secs_t NotationPlaybackStub::totalPlayTime() const
 {
     return muse::audio::secs_t();
@@ -122,17 +131,17 @@ muse::async::Channel<muse::audio::secs_t> NotationPlaybackStub::totalPlayTimeCha
     return muse::async::Channel<muse::audio::secs_t>();
 }
 
-muse::audio::secs_t NotationPlaybackStub::playedTickToSec(tick_t) const
+muse::audio::secs_t NotationPlaybackStub::playedTickToSec(muse::midi::tick_t) const
 {
     return muse::audio::secs_t();
 }
 
-tick_t NotationPlaybackStub::secToPlayedTick(muse::audio::secs_t) const
+muse::midi::tick_t NotationPlaybackStub::secToPlayedTick(muse::audio::secs_t) const
 {
     return 0;
 }
 
-tick_t NotationPlaybackStub::secToTick(muse::audio::secs_t) const
+muse::midi::tick_t NotationPlaybackStub::secToTick(muse::audio::secs_t) const
 {
     return 0;
 }
@@ -147,7 +156,7 @@ RetVal<muse::midi::tick_t> NotationPlaybackStub::playPositionTickByElement(const
     return RetVal<muse::midi::tick_t>::make_ok(0);
 }
 
-void NotationPlaybackStub::addLoopBoundary(LoopBoundaryType, tick_t)
+void NotationPlaybackStub::addLoopBoundary(LoopBoundaryType, muse::midi::tick_t)
 {
 }
 
@@ -171,18 +180,18 @@ Notification NotationPlaybackStub::loopBoundariesChanged() const
     return Notification();
 }
 
-const Tempo& NotationPlaybackStub::multipliedTempo(tick_t) const
+const Tempo& NotationPlaybackStub::multipliedTempo(muse::midi::tick_t) const
 {
     static const Tempo dummy;
     return dummy;
 }
 
-MeasureBeat NotationPlaybackStub::beat(tick_t) const
+MeasureBeat NotationPlaybackStub::beat(muse::midi::tick_t) const
 {
     return MeasureBeat();
 }
 
-tick_t NotationPlaybackStub::beatToRawTick(int, int) const
+muse::midi::tick_t NotationPlaybackStub::beatToRawTick(int, int) const
 {
     return 0;
 }

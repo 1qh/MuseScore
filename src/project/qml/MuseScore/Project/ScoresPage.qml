@@ -25,7 +25,6 @@ import QtQuick.Layouts
 import Muse.Ui
 import Muse.UiComponents
 import MuseScore.Project
-import Muse.Cloud
 
 import "internal/ScoresPage"
 
@@ -47,7 +46,6 @@ FocusScope {
     function applySubSection() {
         switch (root.subSection) {
         case "newAndRecent": scoresPageModel.tabIndex = 0; break
-        case "myOnlineScores": scoresPageModel.tabIndex = 1; break
         default: return
         }
 
@@ -70,13 +68,13 @@ FocusScope {
         id: scoresPageModel
 
         onTabIndexChanged: {
-            tabBar.currentIndex = scoresPageModel.tabIndex
+            tabBar.currentIndex = 0
         }
     }
 
     Component.onCompleted: {
         applySubSection()
-        tabBar.currentIndex = scoresPageModel.tabIndex
+        tabBar.currentIndex = 0
         tabBar.completed = true
     }
 
@@ -179,13 +177,7 @@ FocusScope {
                 navigation.column: 1
             }
 
-            StyledTabButton {
-                text: qsTrc("project", "My online scores")
 
-                navigation.name: "MyOnlineScores"
-                navigation.panel: navTabPanel
-                navigation.column: 2
-            }
         }
 
         NavigationPanel {
@@ -198,23 +190,12 @@ FocusScope {
             accessible.name: qsTrc("project", "View buttons")
         }
 
-        FlatButton {
-            id: refreshButton
 
-            visible: tabBar.currentIndex === 1
-
-            navigation.panel: viewButtonsNavPanel
-            navigation.order: 1
-
-            icon: IconCode.UPDATE
-            text: qsTrc("project", "Refresh")
-            orientation: Qt.Horizontal
-        }
 
         RadioButtonGroup {
             id: viewTypeRadioButtons
 
-            property int navigationOrderStart: refreshButton.navigation.order + 1
+            property int navigationOrderStart: 1
 
             implicitHeight: ui.theme.defaultButtonSize
 
@@ -259,7 +240,7 @@ FocusScope {
                 return null
             }
 
-            return [newAndRecentComp, onlineScoresComp][tabBar.currentIndex]
+            return newAndRecentComp
         }
     }
 
@@ -290,61 +271,10 @@ FocusScope {
                 Qt.callLater(scoresPageModel.revealInFileBrowser, scorePath)
             }
 
-            onViewOnlineRequested: function(scoreId) {
-                Qt.callLater(scoresPageModel.viewOnline, scoreId)
-            }
-
-            onDeleteScoreRequested: function(scoreId, scoreName) {
-                Qt.callLater(scoresPageModel.deleteScore, scoreId, scoreName)
-            }
         }
     }
 
-    Component {
-        id: onlineScoresComp
 
-        CloudScoresView {
-            id: cloudScoresView
-            anchors.fill: parent
-
-            viewType: scoresPageModel.viewType
-            searchText: searchField.searchText
-
-            backgroundColor: background.color
-            sideMargin: prv.sideMargin
-
-            navigationSection: navSec
-            navigationOrder: 4
-
-            onCreateNewScoreRequested: {
-                scoresPageModel.createNewScore()
-            }
-
-            onOpenScoreRequested: function(scorePath, displayName) {
-                Qt.callLater(scoresPageModel.openScore, scorePath, displayName)
-            }
-
-            onRevealInFileBrowserRequested: function(scorePath) {
-                Qt.callLater(scoresPageModel.revealInFileBrowser, scorePath)
-            }
-
-            onViewOnlineRequested: function(scoreId) {
-                Qt.callLater(scoresPageModel.viewOnline, scoreId)
-            }
-
-            onDeleteScoreRequested: function(scoreId, scoreName) {
-                Qt.callLater(scoresPageModel.deleteScore, scoreId, scoreName)
-            }
-
-            Connections {
-                target: refreshButton
-
-                function onClicked() {
-                    cloudScoresView.refresh()
-                }
-            }
-        }
-    }
 
     Rectangle {
         id: buttonsPanel
@@ -367,22 +297,7 @@ FocusScope {
             accessible.name: qsTrc("project", "Scores actions")
         }
 
-        FlatButton {
-            anchors.left: parent.left
-            anchors.leftMargin: prv.sideMargin
-            anchors.verticalCenter: parent.verticalCenter
 
-            navigation.name: "ScoreManager"
-            navigation.panel: navBottomPanel
-            navigation.column: 1
-
-            minWidth: 216
-            text: qsTrc("project", "Score manager (online)")
-
-            onClicked: {
-                scoresPageModel.openScoreManager()
-            }
-        }
 
         Row {
             anchors.right : parent.right
@@ -404,17 +319,7 @@ FocusScope {
                 }
             }
 
-            FlatButton {
-                navigation.name: "ConvertFileToScore"
-                navigation.panel: navBottomPanel
-                navigation.column: 3
 
-                text: qsTrc("project", "Convert…")
-
-                onClicked: {
-                    scoresPageModel.convertFileToScore()
-                }
-            }
 
             FlatButton {
                 navigation.name: "Open other Score"

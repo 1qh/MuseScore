@@ -38,7 +38,6 @@ ColumnLayout {
     }
 
     signal isRemapPercussionChangeRequested(bool remapPercussion)
-    signal watchVideoRequested()
 
     property NavigationPanel navigationPanel: NavigationPanel {
         name: "MigrationPanel"
@@ -82,8 +81,7 @@ ColumnLayout {
 
     CheckBox {
         id: percussionOption
-        text: qsTrc("project/migration", "Use our new notation and sound mapping for <a href=\"%1\">MDL percussion</a>")
-              .arg("https://musescore.org/node/367337") // non-'/en' URL should redirect to translated version, if available
+        text: qsTrc("project/migration", "Use our new notation and sound mapping for MDL percussion")
         checked: root.isRemapPercussion
 
         navigation.panel: root.navigationPanel
@@ -91,19 +89,6 @@ ColumnLayout {
 
         onClicked: {
             root.isRemapPercussionChangeRequested(!checked)
-        }
-    }
-
-    FlatButton {
-        id: watchVideo
-
-        text: qsTrc("project/migration", "Watch video about changes")
-
-        navigation.panel: root.navigationPanel
-        navigation.row: 2
-
-        onClicked: {
-            root.watchVideoRequested()
         }
     }
 }

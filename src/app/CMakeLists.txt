@@ -123,7 +123,6 @@ add_to_link_if_exists(muse::actions)
 add_to_link_if_exists(muse::audio)
 add_to_link_if_exists(muse::audioplugins)
 add_to_link_if_exists(muse::autobot)
-add_to_link_if_exists(muse::cloud)
 add_to_link_if_exists(muse::diagnostics)
 add_to_link_if_exists(muse::dockwindow)
 add_to_link_if_exists(muse::extensions)
@@ -386,13 +385,10 @@ elseif(OS_IS_FBSD)
 ###########################################
 elseif(OS_IS_MAC)
     install(FILES
-            ${PROJECT_SOURCE_DIR}/fonts/bravura/BravuraText.otf
-            ${PROJECT_SOURCE_DIR}/fonts/campania/Campania.otf
             ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-BdIta.otf
             ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-Bold.otf
             ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-Italic.otf
             ${PROJECT_SOURCE_DIR}/fonts/edwin/Edwin-Roman.otf
-            ${PROJECT_SOURCE_DIR}/fonts/gootville/GootvilleText.otf
             ${PROJECT_SOURCE_DIR}/fonts/FreeSans.ttf
             ${PROJECT_SOURCE_DIR}/fonts/FreeSerif.ttf
             ${PROJECT_SOURCE_DIR}/fonts/FreeSerifBold.ttf
@@ -403,11 +399,6 @@ elseif(OS_IS_MAC)
             ${PROJECT_SOURCE_DIR}/fonts/mscore-BC.ttf
             ${PROJECT_SOURCE_DIR}/fonts/mscoreTab.ttf
             ${PROJECT_SOURCE_DIR}/fonts/mscore/MScoreText.otf
-            ${PROJECT_SOURCE_DIR}/fonts/musejazz/MuseJazzText.otf
-            ${PROJECT_SOURCE_DIR}/fonts/petaluma/PetalumaScript.otf
-            ${PROJECT_SOURCE_DIR}/fonts/petaluma/PetalumaText.otf
-            ${PROJECT_SOURCE_DIR}/fonts/finalemaestro/FinaleMaestroText-Regular.otf
-            ${PROJECT_SOURCE_DIR}/fonts/finalebroadway/FinaleBroadwayText.otf
             DESTINATION ${Mscore_SHARE_NAME}${Mscore_INSTALL_NAME}fonts
     )
 

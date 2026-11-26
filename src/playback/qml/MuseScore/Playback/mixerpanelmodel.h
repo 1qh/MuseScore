@@ -99,7 +99,6 @@ private:
 
     MixerChannelItem* buildInstrumentChannelItem(const muse::audio::TrackId trackId, const engraving::InstrumentTrackId& instrumentTrackId,
                                                  bool isPrimary = true);
-    MixerChannelItem* buildAuxChannelItem(muse::audio::aux_channel_idx_t index, const muse::audio::TrackId trackId);
     MixerChannelItem* buildMasterChannelItem();
 
     int masterChannelIndex() const;
@@ -107,10 +106,8 @@ private:
     MixerChannelItem* findChannelItem(const muse::audio::TrackId& trackId) const;
 
     void loadOutputParams(MixerChannelItem* item, muse::audio::AudioOutputParams&& params);
-    void updateOutputResourceItemCount();
 
     project::INotationProjectPtr currentProject() const;
-    project::IProjectAudioSettingsPtr audioSettings() const;
     notation::INotationPlaybackPtr notationPlayback() const;
     notation::INotationPartsPtr masterNotationParts() const;
 

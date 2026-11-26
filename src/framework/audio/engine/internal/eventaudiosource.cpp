@@ -23,6 +23,7 @@
 #include "eventaudiosource.h"
 
 #include "audio/common/audiosanitizer.h"
+#include "synthesizers/silentsynth.h"
 
 #include "log.h"
 
@@ -39,6 +40,9 @@ EventAudioSource::EventAudioSource(const TrackId trackId,
     : muse::Contextable(iocCtx), m_trackId(trackId), m_playbackData(playbackData)
 {
     ONLY_AUDIO_ENGINE_THREAD;
+
+    m_synth = std::make_shared<SilentSynth>(iocContext());
+    m_synth->setup(m_playbackData);
 
     m_playbackData.offStream.onReceive(this, [onOffStreamReceived, trackId](const PlaybackEventsMap&,
                                                                             const DynamicLevelLayers&,
@@ -175,14 +179,16 @@ void EventAudioSource::applyInputParams(const AudioInputParams& requiredParams)
         m_playbackData = m_synth->playbackData();
     }
 
-    m_synth = synthResolver()->resolveSynth(m_trackId, requiredParams, m_outputSpec, m_playbackData.setupData);
-
-    if (!m_synth) {
-        m_synth = synthResolver()->resolveDefaultSynth(m_trackId);
-        IF_ASSERT_FAILED(m_synth) {
-            LOGE() << "Default synth not found!";
-            return;
-        }
+    ISynthesizerPtr resolvedSynth;
+    if (requiredParams.isValid()) {
+        resolvedSynth = synthResolver()->resolveSynth(m_trackId, requiredParams, m_outputSpec, m_playbackData.setupData);
+    }
+    if (!resolvedSynth) {
+        resolvedSynth = std::make_shared<SilentSynth>(iocContext());
+    }
+    m_synth = std::move(resolvedSynth);
+    IF_ASSERT_FAILED(m_synth) {
+        return;
     }
 
     m_synth->paramsChanged().onReceive(this, [this](const AudioInputParams& params) {

@@ -24,6 +24,8 @@
 
 #include <qqmlintegration.h>
 
+#include <set>
+
 #include "async/asyncable.h"
 #include "actions/actionable.h"
 
@@ -35,6 +37,7 @@
 #include "notation/inotationconfiguration.h"
 #include "notationscene/inotationsceneconfiguration.h"
 #include "braille/ibrailleconfiguration.h"
+#include "playback/iplaybackcontroller.h"
 #include "iappshellconfiguration.h"
 
 namespace mu::appshell {
@@ -55,6 +58,9 @@ class NotationPageModel : public QObject, public muse::Contextable, public muse:
     muse::ContextInject<muse::dock::IDockWindowProvider> dockWindowProvider = { this };
     muse::ContextInject<muse::extensions::IExtensionsProvider> extensionsProvider = { this };
     muse::ContextInject<context::IGlobalContext> globalContext = { this };
+    muse::ContextInject<playback::IPlaybackController> playbackController = { this };
+
+    std::set<const void*> m_readerViewScores;
 
 public:
     explicit NotationPageModel(QObject* parent = nullptr);
@@ -78,6 +84,7 @@ public:
 
     Q_INVOKABLE QString mixerPanelName() const;
     Q_INVOKABLE QString pianoKeyboardPanelName() const;
+    Q_INVOKABLE QString navigatorPanelName() const;
     Q_INVOKABLE QString timelinePanelName() const;
     Q_INVOKABLE QString drumsetPanelName() const;
     Q_INVOKABLE QString percussionPanelName() const;
@@ -103,6 +110,7 @@ private:
     void doUpdateExtensionsToolBarVisibility();
 
     bool m_inited = false;
+    bool m_keyboardOpenedByPlayback = false;
     bool m_updateDrumsetPanelVisibilityScheduled = false;
     bool m_updatePercussionPanelVisibilityScheduled = false;
     bool m_updateExtensionsToolBarVisibilityScheduled = false;

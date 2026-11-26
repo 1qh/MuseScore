@@ -93,6 +93,10 @@ void NotationMidiInput::onMidiEventReceived(const muse::midi::Event& event)
         muse::midi::Event::Opcode::PitchBend,
     };
 
+    if (event.opcode() == muse::midi::Event::Opcode::NoteOn || event.opcode() == muse::midi::Event::Opcode::NoteOff) {
+        m_noteEventsReceived.send(event);
+    }
+
     if (muse::contains(ACCEPTED_OPCODES, event.opcode())) {
         m_eventsQueue.push_back(event);
 
@@ -105,6 +109,11 @@ void NotationMidiInput::onMidiEventReceived(const muse::midi::Event& event)
 muse::async::Channel<std::vector<const Note*> > NotationMidiInput::notesReceived() const
 {
     return m_notesReceivedChannel;
+}
+
+muse::async::Channel<muse::midi::Event> NotationMidiInput::noteEventsReceived() const
+{
+    return m_noteEventsReceived;
 }
 
 void NotationMidiInput::onRealtimeAdvance()

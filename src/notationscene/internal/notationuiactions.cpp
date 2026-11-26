@@ -1640,11 +1640,6 @@ const UiActionList NotationUiActions::s_actions = {
              TranslatableString("action", "Page: Bottom of last"),
              TranslatableString("action", "Jump to bottom of last page")
              ),
-    UiAction("help",
-             mu::context::UiCtxProjectOpened,
-             mu::context::CTX_NOTATION_OPENED,
-             TranslatableString("action", "Context sensitive help")
-             ),
     UiAction("repeat-sel",
              mu::context::UiCtxProjectOpened,
              mu::context::CTX_NOTATION_OPENED,

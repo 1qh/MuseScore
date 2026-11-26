@@ -40,52 +40,30 @@ MixerPanelSection {
 
         property string accessibleName: (Boolean(root.needReadChannelName) ? channelItem.title + " " : "") + root.headerTitle
 
-        Row {
+        VolumeSlider {
             anchors.horizontalCenter: parent.horizontalCenter
+            volumeLevel: content.channelItem.volumeLevel
+            stepSize: 1.0
 
-            spacing: 8
-
-            VolumeSlider {
-                volumeLevel: content.channelItem.volumeLevel
-                stepSize: 1.0
-
-                navigation.panel: content.channelItem.panel
-                navigation.row: root.navigationRowStart
-                navigation.accessible.name: content.accessibleName + " " + readableVolumeLevel
-                navigation.onActiveChanged: {
-                    if (navigation.active) {
-                        root.navigateControlIndexChanged({row: navigation.row, column: navigation.column})
-                    }
-                }
-
-                onVolumeLevelMoved: function(level) {
-                    content.channelItem.volumeLevel = Math.round(level * 10) / 10
-                }
-
-                onIncreaseRequested: {
-                    content.channelItem.volumeLevel += stepSize
-                }
-
-                onDecreaseRequested: {
-                    content.channelItem.volumeLevel -= stepSize
+            navigation.panel: content.channelItem.panel
+            navigation.row: root.navigationRowStart
+            navigation.accessible.name: content.accessibleName + " " + readableVolumeLevel
+            navigation.onActiveChanged: {
+                if (navigation.active) {
+                    root.navigateControlIndexChanged({row: navigation.row, column: navigation.column})
                 }
             }
 
-            Row {
-                anchors.verticalCenter: parent.verticalCenter
+            onVolumeLevelMoved: function(level) {
+                content.channelItem.volumeLevel = Math.round(level * 10) / 10
+            }
 
-                spacing: 2
+            onIncreaseRequested: {
+                content.channelItem.volumeLevel += stepSize
+            }
 
-                VolumePressureMeter {
-                    id: leftPressure
-                    currentVolumePressure: content.channelItem.leftChannelPressure
-                }
-
-                VolumePressureMeter {
-                    id: rightPressure
-                    currentVolumePressure: content.channelItem.rightChannelPressure
-                    showRuler: true
-                }
+            onDecreaseRequested: {
+                content.channelItem.volumeLevel -= stepSize
             }
         }
     }

@@ -45,11 +45,12 @@ ListItemBlank {
     width: parent ? parent.width : implicitWidth
 
     implicitHeight: 38
-    implicitWidth: 248
+    implicitWidth: contentRow.implicitWidth + contentRow.anchors.leftMargin + root.sideMargin
 
     background.border.width: 0
 
     RowLayout {
+        id: contentRow
         anchors.fill: parent
 
         // 70 = 32+2+32+4 for the buttons and spacing in LayoutPanelItemDelegate

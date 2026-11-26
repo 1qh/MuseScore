@@ -29,7 +29,6 @@ FlatButton {
 
     property bool isCreateNew: false
     property bool isNoResultsFound: false
-    property bool isCloud: false
     property bool showRemoveFromRecentFiles: false
     property alias isMenuOpened: menuLoader.isMenuOpened
     property bool isMenuOpenedByButton: menuLoader.isMenuOpened && menuLoader.parent === root
@@ -39,9 +38,7 @@ FlatButton {
 
     signal openRequested()
     signal revealInFileBrowserRequested()
-    signal viewOnlineRequested()
     signal removeFromRecentFilesRequested()
-    signal deleteScoreRequested()
 
     function show(position, item) {
         let target = item ? item : root
@@ -80,13 +77,10 @@ FlatButton {
             { id: "open", title: qsTrc("project", "Open") }
         ]
 
-        if (root.isCloud) {
-            result.push({ id: "view-online", title: qsTrc("project", "View online"), icon: IconCode.OPEN_LINK })
-        } else {
-            result.push({ id: "reveal-in-file-browser", title: root.revealInFileBrowserTitle })
-        }
+        result.push({ id: "reveal-in-file-browser", title: root.revealInFileBrowserTitle })
 
-        if (root.showRemoveFromRecentFiles || root.isCloud) {
+
+        if (root.showRemoveFromRecentFiles) {
             result.push({}) // separator
         }
 
@@ -94,9 +88,7 @@ FlatButton {
             result.push({ id: "remove-from-recent-files", title: qsTrc("project", "Remove from recent files list") })
         }
 
-        if (root.isCloud) {
-            result.push({ id: "delete-score", title: qsTrc("project", "Delete score"), icon: IconCode.DELETE_TANK })
-        }
+
 
         return result
     }

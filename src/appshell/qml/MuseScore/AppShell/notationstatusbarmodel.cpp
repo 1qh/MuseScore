@@ -179,7 +179,10 @@ void NotationStatusBarModel::initAvailableViewModeList()
 {
     TRACEFUNC;
 
-    qDeleteAll(m_availableViewModeList);
+    //! NOTE A view may still hold these items until it learns of the change, so each is deleted only after that
+    for (auto* item : std::as_const(m_availableViewModeList)) {
+        item->deleteLater();
+    }
     m_availableViewModeList.clear();
 
     DEFER {
@@ -310,7 +313,10 @@ void NotationStatusBarModel::initAvailableZoomList()
 {
     TRACEFUNC;
 
-    qDeleteAll(m_availableZoomList);
+    //! NOTE A view may still hold these items until it learns of the change, so each is deleted only after that
+    for (auto* item : std::as_const(m_availableZoomList)) {
+        item->deleteLater();
+    }
     m_availableZoomList.clear();
 
     DEFER {

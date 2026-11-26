@@ -31,6 +31,8 @@ Item {
     property alias navigationSection: navPanel.section
     property alias contentNavigationPanelOrderStart: navPanel.order
 
+    implicitWidth: timelineView.implicitWidth
+    implicitHeight: timelineView.implicitHeight
     NavigationPanel {
         id: navPanel
         name: "TimelineSection"
@@ -39,6 +41,7 @@ Item {
     }
 
     TimelineView {
+        id: timelineView
         anchors.fill: parent
     }
 }

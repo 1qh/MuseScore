@@ -265,7 +265,8 @@ void PlaybackEventsRenderer::renderMetronome(const Score* score, const int tick,
 
 void PlaybackEventsRenderer::renderCountIn(const Score* score, const int startTick, const muse::mpe::timestamp_t actualTimestamp,
                                            const muse::mpe::ArticulationsProfilePtr profile,
-                                           muse::mpe::PlaybackEventsMap& result, muse::mpe::duration_t& countInDuration) const
+                                           muse::mpe::PlaybackEventsMap& result, muse::mpe::duration_t& countInDuration,
+                                           bool fullMeasureOnly) const
 {
     const Measure* measure = score->tick2measure(Fraction::fromTicks(startTick));
     if (!measure) {
@@ -286,7 +287,7 @@ void PlaybackEventsRenderer::renderCountIn(const Score* score, const int startTi
     int endTick = ticksPerMeasure + (startTick - measureStartTick); // ... not starting playback at beginning of measure
     int remainingTicks = 0;
 
-    if (measure->isAnacrusis()) { // ... measure is incomplete (anacrusis)
+    if (!fullMeasureOnly && measure->isAnacrusis()) { // ... measure is incomplete (anacrusis)
         int measureTicks = measure->ticks().ticks();
         endTick += ticksPerMeasure - measureTicks;
         remainingTicks = measureTicks % step;
@@ -295,6 +296,10 @@ void PlaybackEventsRenderer::renderCountIn(const Score* score, const int startTi
     MeasureBeat measureBeat = findBeat(score, startTick);
     int closestMainBeatTick = score->sigmap()->bar2tick(measureBeat.measureIndex, std::ceil(measureBeat.beat));
     remainingTicks += closestMainBeatTick - startTick;
+    if (fullMeasureOnly) {
+        endTick = ticksPerMeasure;
+        remainingTicks = 0;
+    }
 
     timestamp_t eventTimestamp = actualTimestamp;
 

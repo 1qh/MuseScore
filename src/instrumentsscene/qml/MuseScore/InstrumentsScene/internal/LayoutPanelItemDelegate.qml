@@ -85,7 +85,7 @@ FocusableControl {
     width: parent ? parent.width : implicitWidth
 
     implicitHeight: 38
-    implicitWidth: 248
+    implicitWidth: visibilityControls.implicitWidth + 2 * root.sideMargin
 
     Drag.keys: [ root.filterKey ]
     Drag.active: prv.dragged && root.isSelectable

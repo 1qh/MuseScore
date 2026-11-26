@@ -35,6 +35,12 @@ Item {
     property NavigationSection navigationSection: null
     property int contentNavigationPanelOrderStart: 1
 
+    implicitWidth: Math.max(rowLayout.implicitWidth,
+                            soundTitleLabel.implicitWidth + soundTitleIcon.implicitWidth
+                            + soundTitleIcon.anchors.rightMargin + soundTitleLabel.anchors.rightMargin,
+                            panelDisabledLabel.visible ? panelDisabledLabel.implicitWidth : 0)
+    implicitHeight: soundTitleLabel.height + Math.max(rowLayout.height,
+                                                     panelDisabledLabel.visible ? panelDisabledLabel.implicitHeight : 0)
     signal resizeRequested(var newWidth, var newHeight)
 
     anchors.fill: parent

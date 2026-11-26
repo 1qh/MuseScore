@@ -33,14 +33,6 @@ const QString AbstractScoresModel::THUMBNAIL_URL_KEY("thumbnailUrl");
 const QString AbstractScoresModel::TIME_SINCE_MODIFIED_KEY("timeSinceModified");
 const QString AbstractScoresModel::IS_CREATE_NEW_KEY("isCreateNew");
 const QString AbstractScoresModel::IS_NO_RESULTS_FOUND_KEY("isNoResultsFound");
-const QString AbstractScoresModel::PROCESSING_STATUS_KEY("processingStatus");
-const QString AbstractScoresModel::CONVERT_ID_KEY("convertId");
-const QString AbstractScoresModel::CONVERT_TYPE_KEY("convertType");
-const QString AbstractScoresModel::UPLOAD_ID_KEY("uploadId");
-const QString AbstractScoresModel::IS_CLOUD_KEY("isCloud");
-const QString AbstractScoresModel::CLOUD_SCORE_ID_KEY("scoreId");
-const QString AbstractScoresModel::CLOUD_VISIBILITY_KEY("cloudVisibility");
-const QString AbstractScoresModel::CLOUD_VIEW_COUNT_KEY("cloudViewCount");
 
 AbstractScoresModel::AbstractScoresModel(QObject* parent)
     : QAbstractListModel(parent)
@@ -59,7 +51,6 @@ QVariant AbstractScoresModel::data(const QModelIndex& index, int role) const
     switch (role) {
     case NameRole: return item[NAME_KEY];
     case IsNoResultsFoundRole: return item[IS_NO_RESULTS_FOUND_KEY];
-    case ProcessingStatusRole: return item[PROCESSING_STATUS_KEY];
     case ScoreRole: return item;
     }
 
@@ -76,7 +67,6 @@ QHash<int, QByteArray> AbstractScoresModel::roleNames() const
     static const QHash<int, QByteArray> ROLE_NAMES {
         { NameRole, NAME_KEY.toUtf8() },
         { IsNoResultsFoundRole, IS_NO_RESULTS_FOUND_KEY.toUtf8() },
-        { ProcessingStatusRole, PROCESSING_STATUS_KEY.toUtf8() },
         { ScoreRole, "score" }
     };
 

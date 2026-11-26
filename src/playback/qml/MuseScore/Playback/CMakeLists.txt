@@ -26,8 +26,6 @@ qt_add_qml_module(playback_qml
     SOURCES
         abstractaudioresourceitem.cpp
         abstractaudioresourceitem.h
-        auxsenditem.cpp
-        auxsenditem.h
         inputresourceitem.cpp
         inputresourceitem.h
         mixerchannelitem.cpp
@@ -37,12 +35,6 @@ qt_add_qml_module(playback_qml
         mixerpanelmodel.cpp
         mixerpanelmodel.h
         msbasicpresetscategories.h
-        notationregionsbeingprocessedmodel.cpp
-        notationregionsbeingprocessedmodel.h
-        onlinesoundsstatusmodel.cpp
-        onlinesoundsstatusmodel.h
-        outputresourceitem.cpp
-        outputresourceitem.h
         playbackloadingmodel.cpp
         playbackloadingmodel.h
         playbacktoolbarmodel.cpp
@@ -52,31 +44,21 @@ qt_add_qml_module(playback_qml
         soundprofilesmodel.cpp
         soundprofilesmodel.h
     QML_FILES
-        internal/AudioProcessingProgressBar.qml
         internal/AudioResourceControl.qml
-        internal/AuxSendControl.qml
-        internal/KnobControl.qml
         internal/MeasureAndBeatFields.qml
-        internal/MixerAuxSendsSection.qml
-        internal/MixerBalanceSection.qml
         internal/MixerFaderSection.qml
-        internal/MixerFxSection.qml
         internal/MixerMuteAndSoloSection.qml
         internal/MixerPanelSection.qml
         internal/MixerPanelToolbar.qml
         internal/MixerSoundSection.qml
         internal/MixerTitleSection.qml
-        internal/MixerVolumeSection.qml
         internal/PlaybackSpeedPopup.qml
         internal/PlaybackSpeedSlider.qml
         internal/PlaybackToolBarActions.qml
         internal/SoundFlag/MuseSoundsParams.qml
         internal/SoundFlag/ParamsGridView.qml
-        internal/VolumePressureMeter.qml
         internal/VolumeSlider.qml
         MixerPanel.qml
-        NotationRegionsBeingProcessedView.qml
-        OnlineSoundsStatusView.qml
         PlaybackLoadingInfo.qml
         PlaybackToolBar.qml
         SoundFlagPopup.qml

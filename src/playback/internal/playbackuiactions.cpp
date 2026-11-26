@@ -33,7 +33,6 @@ using namespace muse::ui;
 using namespace muse::actions;
 
 static const ActionCode PLAY_FROM_SELECTION_CODE("play-from-selection");
-static const ActionCode CLEAR_ONLINE_SOUNDS_CACHE_CODE("clear-online-sounds-cache");
 
 const UiActionList PlaybackUiActions::s_mainActions = {
     UiAction("play",
@@ -201,14 +200,6 @@ const UiActionList PlaybackUiActions::s_diagnosticActions = {
              )
 };
 
-const UiActionList PlaybackUiActions::s_onlineSoundsActions = {
-    UiAction(CLEAR_ONLINE_SOUNDS_CACHE_CODE,
-             mu::context::UiCtxAny,
-             mu::context::CTX_ANY,
-             TranslatableString("action", "Clear online sounds cache for this score")
-             ),
-};
-
 PlaybackUiActions::PlaybackUiActions(std::shared_ptr<PlaybackController> controller, const muse::modularity::ContextPtr& iocCtx)
     : muse::Contextable(iocCtx), m_controller(controller)
 {
@@ -248,10 +239,6 @@ void PlaybackUiActions::init()
             m_actionEnabledChanged.send({ PLAY_FROM_SELECTION_CODE });
         }, Asyncable::Mode::SetReplace /* FIXME */);
     });
-
-    m_controller->onlineSoundsChanged().onNotify(this, [this]() {
-        m_actionEnabledChanged.send({ CLEAR_ONLINE_SOUNDS_CACHE_CODE });
-    });
 }
 
 const UiActionList& PlaybackUiActions::actionsList() const
@@ -264,7 +251,6 @@ const UiActionList& PlaybackUiActions::actionsList() const
         alist.insert(alist.end(), s_settingsActions.cbegin(), s_settingsActions.cend());
         alist.insert(alist.end(), s_loopBoundaryActions.cbegin(), s_loopBoundaryActions.cend());
         alist.insert(alist.end(), s_diagnosticActions.cbegin(), s_diagnosticActions.cend());
-        alist.insert(alist.end(), s_onlineSoundsActions.cbegin(), s_onlineSoundsActions.cend());
     }
     return alist;
 }
@@ -277,10 +263,6 @@ bool PlaybackUiActions::actionEnabled(const UiAction& act) const
 
     if (!m_controller->canReceiveAction(act.code)) {
         return false;
-    }
-
-    if (act.code == CLEAR_ONLINE_SOUNDS_CACHE_CODE) {
-        return !m_controller->onlineSounds().empty();
     }
 
     if (act.code == PLAY_FROM_SELECTION_CODE) {

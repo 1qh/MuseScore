@@ -24,6 +24,8 @@
 #include <QScreen>
 
 #include "engraving/dom/score.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/system.h"
 
 #include "notation.h"
 #include "notationinteraction.h"
@@ -119,13 +121,15 @@ void NotationPainting::doPaint(Painter* painter, const Options& opt)
 
     Options myopt = opt;
     bool printPageBackground = myopt.printPageBackground;
-    myopt.onPaintPageSheet = [this, printPageBackground](Painter* painter, const Page* page, const RectF& pageRect) {
-        paintPageSheet(painter, page, pageRect, printPageBackground);
-    };
+    if (!myopt.onlySystem) {
+        myopt.onPaintPageSheet = [this, printPageBackground](Painter* painter, const Page* page, const RectF& pageRect) {
+            paintPageSheet(painter, page, pageRect, printPageBackground);
+        };
+    }
 
     scoreRenderer()->paintScore(painter, score(), myopt);
 
-    if (!myopt.isPrinting) {
+    if (!myopt.isPrinting && !myopt.onlySystem) {
         rendering::PaintOptions eopt;
         eopt.isPrinting = myopt.isPrinting;
         eopt.invertColors = myopt.invertColors;
@@ -191,6 +195,23 @@ void NotationPainting::paintView(Painter* painter, const RectF& frameRect, bool 
     opt.frameRect = frameRect;
     opt.deviceDpi = uiConfiguration()->logicalDpi();
     opt.isPrinting = isPrinting;
+    opt.invertColors = configuration()->shouldInvertScore();
+    doPaint(painter, opt);
+}
+
+void NotationPainting::paintSystem(Painter* painter, const engraving::System* system)
+{
+    if (!system || !system->page()) {
+        return;
+    }
+    Options opt;
+    opt.isSetViewport = false;
+    opt.isMultiPage = true;
+    opt.printPageBackground = false;
+    opt.fromPage = static_cast<int>(system->page()->pageNumber());
+    opt.toPage = opt.fromPage;
+    opt.onlySystem = system;
+    opt.showSelection = false;
     opt.invertColors = configuration()->shouldInvertScore();
     doPaint(painter, opt);
 }

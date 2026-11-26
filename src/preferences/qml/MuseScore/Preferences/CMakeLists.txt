@@ -83,7 +83,6 @@ qt_add_qml_module(preferences_qml
         internal/AdvancedTopSection.qml
         internal/AudioApiSection.qml
         internal/AudioEngineSection.qml
-        internal/AutomaticUpdateSection.qml
         internal/AutoSaveSection.qml
         internal/BaseSection.qml
         internal/BrailleAdvancedSection.qml
@@ -113,21 +112,17 @@ qt_add_qml_module(preferences_qml
         internal/NoteInput/NoteInputSection.qml
         internal/NoteInput/NotePreviewSection.qml
         internal/NoteInput/VoiceAssignmentSection.qml
-        internal/OnlineSoundsSection.qml
         internal/PageSection.qml
         internal/PreferencesButtonsPanel.qml
         internal/PreferencesMenu.qml
         internal/ProgramStartSection.qml
-        internal/PublishMuseScoreComSection.qml
         internal/RemoteControlSection.qml
-        internal/SaveToCloudSection.qml
         internal/ScrollPagesSection.qml
         internal/ThemeAdditionalOptionsSection.qml
         internal/ThemesSection.qml
         internal/ThemeSample.qml
         internal/UiColorsSection.qml
         internal/UiFontSection.qml
-        internal/WelcomeDialogSection.qml
         internal/ZoomSection.qml
     IMPORTS
         TARGET muse_ui_qml

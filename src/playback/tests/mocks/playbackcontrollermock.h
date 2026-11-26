@@ -46,14 +46,9 @@ public:
     MOCK_METHOD(const InstrumentTrackIdMap&, instrumentTrackIdMap, (), (const, override));
     MOCK_METHOD(engraving::InstrumentTrackIdSet, audibleInstrumentTrackIds, (), (const, override));
 
-    MOCK_METHOD(const AuxTrackIdMap&, auxTrackIdMap, (), (const, override));
-
     MOCK_METHOD(muse::async::Channel<muse::audio::TrackId>, trackAdded, (), (const, override));
     MOCK_METHOD(muse::async::Channel<muse::audio::TrackId>, trackRemoved, (), (const, override));
     MOCK_METHOD(muse::async::Channel<bool>, playbackInitedChanged, (), (const, override));
-
-    MOCK_METHOD(std::string, auxChannelName, (muse::audio::aux_channel_idx_t), (const, override));
-    MOCK_METHOD((muse::async::Channel<muse::audio::aux_channel_idx_t, std::string>), auxChannelNameChanged, (), (const, override));
 
     MOCK_METHOD(muse::async::Promise<muse::audio::SoundPresetList>, availableSoundPresets, (const engraving::InstrumentTrackId&), (const,
                                                                                                                                    override));
@@ -95,9 +90,6 @@ public:
     MOCK_METHOD(void, setNotation, (notation::INotationPtr), (override));
     MOCK_METHOD(void, setIsExportingAudio, (bool), (override));
 
-    MOCK_METHOD((const std::map<muse::audio::TrackId, muse::audio::AudioResourceMeta>&), onlineSounds, (), (const, override));
-    MOCK_METHOD(muse::async::Notification, onlineSoundsChanged, (), (const, override));
-    MOCK_METHOD(muse::Progress, onlineSoundsProcessingProgress, (), (const, override));
 };
 }
 

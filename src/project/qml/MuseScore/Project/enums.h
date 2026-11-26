@@ -27,11 +27,7 @@
 #include "types/projecttypes.h" // IWYU pragma: keep
 
 namespace mu::project {
-namespace GenerateAudioTimePeriodTypeForeign {
-Q_NAMESPACE;
-QML_FOREIGN_NAMESPACE(mu::project::_GenerateAudioTimePeriodType);
-QML_NAMED_ELEMENT(GenerateAudioTimePeriodType)
-}
+
 
 namespace MigrationTypeForeign {
 Q_NAMESPACE;

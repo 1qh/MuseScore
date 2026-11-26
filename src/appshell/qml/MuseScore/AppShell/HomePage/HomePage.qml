@@ -28,7 +28,6 @@ import Muse.Ui
 import Muse.UiComponents
 import Muse.Dock
 
-import Muse.Cloud
 import Muse.Learn
 import MuseScore.Project
 import MuseScore.MuseSounds

@@ -163,7 +163,7 @@ void PreferencesModel::load(const QString& currentPageId)
         makeItem("canvas", QT_TRANSLATE_NOOP("preferences", "Canvas"), IconCode::Code::NEW_FILE,
                  "Preferences/CanvasPreferencesPage.qml"),
 
-        makeItem("cloud", QT_TRANSLATE_NOOP("preferences", "Save & publish"), IconCode::Code::CLOUD_FILE,
+        makeItem("cloud", QT_TRANSLATE_NOOP("preferences", "Save"), IconCode::Code::SAVE,
                  "Preferences/SaveAndPublishPreferencesPage.qml"),
 
         makeItem("note-input", QT_TRANSLATE_NOOP("preferences", "Note input"), IconCode::Code::EDIT,
@@ -174,14 +174,6 @@ void PreferencesModel::load(const QString& currentPageId)
 
         makeItem("audio-midi", QT_TRANSLATE_NOOP("preferences", "Audio & MIDI"), IconCode::Code::AUDIO,
                  "Preferences/AudioMidiPreferencesPage.qml"),
-
-#ifdef MUSE_MODULE_MIDIREMOTE
-        makeItem("midi-device-mapping", QT_TRANSLATE_NOOP("preferences", "MIDI mappings"), IconCode::Code::MIDI_INPUT,
-                 "Preferences/MidiDeviceMappingPreferencesPage.qml"),
-#endif
-
-        makeItem("video", QT_TRANSLATE_NOOP("preferences", "Video"), IconCode::Code::VIDEO,
-                 "Preferences/VideoPreferencesPage.qml"),
 
         makeItem("percussion", QT_TRANSLATE_NOOP("preferences", "Percussion"), IconCode::Code::PERCUSSION,
                  "Preferences/PercussionPreferencesPage.qml"),
@@ -196,10 +188,7 @@ void PreferencesModel::load(const QString& currentPageId)
                  "Preferences/FoldersPreferencesPage.qml"),
 
         makeItem("advanced", QT_TRANSLATE_NOOP("preferences", "Advanced"), IconCode::Code::CONFIGURE,
-                 "Preferences/AdvancedPreferencesPage.qml"),
-
-        makeItem("braille", QT_TRANSLATE_NOOP("preferences", "Braille"), IconCode::Code::BRAILLE,
-                 "Preferences/BraillePreferencesPage.qml")
+                 "Preferences/AdvancedPreferencesPage.qml")
     };
 
     for (PreferencePageItem* item: items) {
@@ -236,9 +225,6 @@ void PreferencesModel::resetFactorySettings()
     QApplication::setOverrideCursor(Qt::WaitCursor);
     QApplication::processEvents();
     configuration()->revertToFactorySettings(KEEP_DEFAULT_SETTINGS);
-
-    // Unreset the "First Launch Completed" setting so the first-time launch wizard does not appear.
-    configuration()->setHasCompletedFirstLaunchSetup(true);
 
     configuration()->startEditSettings();
     QApplication::restoreOverrideCursor();

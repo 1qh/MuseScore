@@ -37,7 +37,7 @@ using namespace muse::audio;
 using namespace muse::audio::synth;
 
 static constexpr audioch_t AUDIO_CHANNELS = 2;
-static constexpr samples_t DEFAULT_BUFFER_SIZE = 1024;
+static constexpr samples_t DEFAULT_BUFFER_SIZE = 128;
 static constexpr sample_rate_t DEFAULT_SAMPLE_RATE = 44100;
 
 //TODO: add other setting: audio device etc

@@ -39,12 +39,7 @@ public:
     MOCK_METHOD(muse::Ret, load, (const muse::io::path_t&, const OpenParams&, const std::string&), (override));
     MOCK_METHOD(muse::Ret, createNew, (const ProjectCreateOptions&), (override));
 
-    MOCK_METHOD(bool, isCloudProject, (), (const, override));
-    MOCK_METHOD(const CloudProjectInfo&, cloudInfo, (), (const, override));
-    MOCK_METHOD(void, setCloudInfo, (const CloudProjectInfo&), (override));
 
-    MOCK_METHOD(const CloudAudioInfo&, cloudAudioInfo, (), (const, override));
-    MOCK_METHOD(void, setCloudAudioInfo, (const CloudAudioInfo&), (override));
 
     MOCK_METHOD(bool, isNewlyCreated, (), (const, override));
     MOCK_METHOD(void, markAsNewlyCreated, (), (override));

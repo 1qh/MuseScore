@@ -32,7 +32,6 @@
 
 #include "projectmeta.h"
 
-#include "cloud/cloudtypes.h"
 #include "notation/inotation.h"
 #include "notation/notationtypes.h"
 #include "../inotationwriter.h"
@@ -90,38 +89,16 @@ Q_NAMESPACE;
 enum class Type
 {
     Undefined,
-    Local,
-    Cloud
+    Local
 };
 Q_ENUM_NS(Type)
 }
 
 using SaveLocationType = _SaveLocationType::Type;
 
-struct CloudProjectInfo {
-    QUrl sourceUrl;
-    int revisionId = 0;
-    QString name;
 
-    muse::cloud::Visibility visibility = muse::cloud::Visibility::Private;
 
-    bool isValid() const
-    {
-        return !sourceUrl.isEmpty();
-    }
-};
 
-struct CloudAudioInfo {
-    QString name;
-    QUrl url;
-    muse::cloud::Visibility visibility = muse::cloud::Visibility::Private;
-    bool replaceExisting = false;
-
-    bool isValid() const
-    {
-        return !name.isEmpty();
-    }
-};
 
 struct ExportInfo {
     QString id;
@@ -134,23 +111,18 @@ struct SaveLocation
 {
     SaveLocationType type = SaveLocationType::Undefined;
 
-    std::variant<muse::io::path_t, CloudProjectInfo> data;
+    muse::io::path_t data;
 
     bool isLocal() const
     {
-        return type == SaveLocationType::Local
-               && std::holds_alternative<muse::io::path_t>(data);
+        return type == SaveLocationType::Local;
     }
 
-    bool isCloud() const
-    {
-        return type == SaveLocationType::Cloud
-               && std::holds_alternative<CloudProjectInfo>(data);
-    }
+
 
     bool isValid() const
     {
-        return isLocal() || isCloud();
+        return isLocal();
     }
 
     const muse::io::path_t& localPath() const
@@ -160,29 +132,19 @@ struct SaveLocation
             return null;
         }
 
-        return std::get<muse::io::path_t>(data);
+        return data;
     }
 
-    const CloudProjectInfo& cloudInfo() const
-    {
-        IF_ASSERT_FAILED(isCloud()) {
-            static CloudProjectInfo null;
-            return null;
-        }
 
-        return std::get<CloudProjectInfo>(data);
-    }
 
     SaveLocation() = default;
 
-    SaveLocation(SaveLocationType type, const std::variant<muse::io::path_t, CloudProjectInfo>& data = {})
+    SaveLocation(SaveLocationType type, const muse::io::path_t& data = {})
         : type(type), data(data) {}
 
     SaveLocation(const muse::io::path_t& localPath)
         : type(SaveLocationType::Local), data(localPath) {}
 
-    SaveLocation(const CloudProjectInfo& cloudInfo)
-        : type(SaveLocationType::Cloud), data(cloudInfo) {}
 };
 
 struct ProjectFile {
@@ -319,23 +281,7 @@ struct Template
 
 using Templates = QList<Template>;
 
-struct ProjectBeingDownloaded {
-    int scoreId = 0;
-    muse::ProgressPtr progress;
-};
 
-namespace _GenerateAudioTimePeriodType {
-Q_NAMESPACE;
-
-enum class Type {
-    Never = 0,
-    Always,
-    AfterCertainNumberOfSaves
-};
-Q_ENUM_NS(Type)
-}
-
-using GenerateAudioTimePeriodType = _GenerateAudioTimePeriodType::Type;
 
 namespace _MigrationType {
 Q_NAMESPACE;

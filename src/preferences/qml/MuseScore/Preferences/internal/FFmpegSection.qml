@@ -76,21 +76,6 @@ BaseSection {
                     }
                 }
             }
-
-            FlatButton {
-                text: qsTrc("preferences", "Download FFmpeg")
-                icon: IconCode.OPEN_LINK
-                isNarrow: true
-                orientation: Qt.Horizontal
-
-                navigation.panel: root.navigation
-                navigation.row: ffmpegDirPicker.navigationRowOrderStart
-                navigation.column: 100
-
-                onClicked: {
-                    api.launcher.openUrl("https://handbook.musescore.org/video/installing-ffmpeg")
-                }
-            }
         }
     }
 }

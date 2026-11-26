@@ -29,11 +29,7 @@ import Muse.UiComponents
 import Muse.Dock
 import MuseScore.AppShell
 
-import "./HomePage"
 import "./NotationPage"
-import "./NotationReviewPage"
-import "./PublishPage"
-import "./DevTools"
 
 DockWindow {
     id: root
@@ -67,6 +63,9 @@ DockWindow {
             objectName: "mainToolBar"
             title: qsTrc("appshell", "Main toolbar")
 
+            // The app has no home page and no tabs: the score page is the whole window
+            visible: false
+
             floatable: false
             closable: false
 
@@ -97,22 +96,8 @@ DockWindow {
     ]
 
     pages: [
-        HomePage {
-            window: root.window
-        },
-
         NotationPage {
             topToolbarKeyNavSec: topToolbarKeyNavSec
-        },
-
-        NotationReviewPage {
-            topToolbarKeyNavSec: topToolbarKeyNavSec
-        },
-
-        PublishPage {
-            topToolbarKeyNavSec: topToolbarKeyNavSec
-        },
-
-        DevToolsPage {}
+        }
     ]
 }

@@ -54,13 +54,7 @@ void GeneralPreferencesModel::load()
         emit startupScorePathChanged();
     });
 
-    configuration()->welcomeDialogShowOnStartupChanged().onNotify(this, [this]() {
-        emit showWelcomeDialogChanged();
-    });
 
-    updateConfiguration()->needCheckForUpdateChanged().onNotify(this, [this]() {
-        emit needCheckForNewAppVersionChanged(needCheckForNewAppVersion());
-    });
 }
 
 void GeneralPreferencesModel::checkUpdateForCurrentLanguage()
@@ -249,41 +243,3 @@ QStringList GeneralPreferencesModel::scorePathFilter() const
              muse::qtrc("preferences", "All") + " (*)" };
 }
 
-bool GeneralPreferencesModel::showWelcomeDialog() const
-{
-    return configuration()->welcomeDialogShowOnStartup();
-}
-
-void GeneralPreferencesModel::setShowWelcomeDialog(bool show)
-{
-    if (configuration()->welcomeDialogShowOnStartup() == show) {
-        return;
-    }
-
-    configuration()->setWelcomeDialogShowOnStartup(show);
-}
-
-bool GeneralPreferencesModel::isAppUpdatable() const
-{
-    return updateConfiguration()->isAppUpdatable();
-}
-
-bool GeneralPreferencesModel::needCheckForNewAppVersion() const
-{
-    return updateConfiguration()->needCheckForUpdate();
-}
-
-void GeneralPreferencesModel::setNeedCheckForNewAppVersion(bool value)
-{
-    if (value == needCheckForNewAppVersion()) {
-        return;
-    }
-
-    updateConfiguration()->setNeedCheckForUpdate(value);
-    emit needCheckForNewAppVersionChanged(value);
-}
-
-QString GeneralPreferencesModel::museScorePrivacyPolicyUrl() const
-{
-    return QString::fromStdString(updateConfiguration()->museScorePrivacyPolicyUrl());
-}

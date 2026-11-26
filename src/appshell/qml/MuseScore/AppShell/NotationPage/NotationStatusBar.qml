@@ -107,18 +107,6 @@ Item {
             visible: !hiddenControlsMenuButton.visible
         }
 
-        OnlineSoundsStatusView {
-            id: onlineSoundsStatusView
-
-            Layout.alignment: Qt.AlignVCenter
-            Layout.preferredHeight: 28
-
-            enabled: !root.viewOnly
-
-            navigationPanel: navPanel
-            navigationOrder: 1
-        }
-
         SeparatorLine { orientation: Qt.Vertical; visible: workspaceControl.visible }
 
         FlatButton {

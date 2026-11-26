@@ -94,14 +94,4 @@ TEST(ProjectMscMetaReaderTests, testReadFromMetaAndBox)
     EXPECT_EQ(meta.mscVersion, 0);
 }
 
-TEST(ProjectMscMetaReaderTests, testReadCloudInfo)
-{
-    auto metaReader = std::make_shared<MscMetaReader>();
-    muse::RetVal<CloudProjectInfo> maybeCloudInfo = metaReader->readCloudProjectInfo(getDataPath("from_meta/from_meta.mscx"));
-    ASSERT_TRUE(maybeCloudInfo.ret);
 
-    const CloudProjectInfo& cloudInfo = maybeCloudInfo.val;
-    EXPECT_TRUE(cloudInfo.sourceUrl.isEmpty());
-    EXPECT_EQ(cloudInfo.revisionId, 42);
-    EXPECT_TRUE(cloudInfo.name.isEmpty());
-}

@@ -38,24 +38,8 @@ enum class Err {
 
     FileOpenError,
     FileCreateError,
-    InvalidCloudScoreId,
 
-    UnsupportedUrl,
-    MalformedOpenScoreUrl,
-
-    ConvertValidationFailed,
-    ConvertUnsupportedFormat,
-    ConvertMixedFileTypes,
-    ConvertMultiplePdfFiles,
-    ConvertAudioFileTooLarge,
-    ConvertFileTooLarge,
-    ConvertCombinedImageTooLarge,
-    ConvertTooManyAudioFiles,
-    ConvertTooManyImages,
-    ConvertUnsupportedLink,
-    ConvertProcessingFailed,
-    ConvertUploadFailed,
-    ConvertRateLimited,
+    UnsupportedUrl = int(muse::Ret::Code::ProjectFirst) + 9,
 };
 
 inline muse::Ret make_ret(Err e)

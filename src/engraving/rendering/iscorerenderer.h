@@ -37,6 +37,7 @@ namespace mu::engraving {
 class Score;
 class EngravingItem;
 class Page;
+class System;
 
 class Accidental;
 class ActionIcon;
@@ -118,6 +119,7 @@ public:
         int copyCount = 1;
         int trimMarginPixelSize = -1;
         int deviceDpi = -1;
+        const System* onlySystem = nullptr;
 
         std::function<void(muse::draw::Painter* painter, const Page* page, const RectF& pageRect)> onPaintPageSheet;
         std::function<void()> onNewPage;

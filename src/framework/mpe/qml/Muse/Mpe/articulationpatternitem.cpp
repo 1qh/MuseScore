@@ -99,8 +99,11 @@ void ArticulationPatternItem::load(const ArticulationPattern& pattern)
 {
     beginResetModel();
 
+    //! NOTE A view may still hold these items until it learns of the change, so each is deleted only after that
+    for (auto* item : std::as_const(m_items)) {
+        item->deleteLater();
+    }
     m_items.clear();
-    qDeleteAll(m_items);
 
     for (auto it = pattern.begin(); it != pattern.end(); ++it) {
         auto next = std::next(it, 1);

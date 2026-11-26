@@ -406,6 +406,7 @@ void ConsoleApp::applyCommandLineOptions(const CmdOptions& options, IApplication
 #endif
 
 #ifdef MUE_BUILD_IMPEXP_VIDEOEXPORT_MODULE
+    videoExportConfiguration()->setViewMode(options.exportVideo.viewMode);
     videoExportConfiguration()->setResolution(options.exportVideo.resolution);
     videoExportConfiguration()->setFps(options.exportVideo.fps);
     videoExportConfiguration()->setLeadingSec(options.exportVideo.leadingSec);

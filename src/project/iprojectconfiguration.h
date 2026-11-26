@@ -69,30 +69,15 @@ public:
     virtual muse::io::path_t defaultOpenProjectsPath() const = 0;
 
     //! NOTE: best-guess directory to start browsing from in the convert-to-score "open file" dialog
-    virtual muse::io::path_t defaultConvertFilePath() const = 0;
-    virtual void setLastOpenedConvertFilePath(const muse::io::path_t& path) = 0;
 
-    virtual bool shouldAskSaveLocationType() const = 0;
-    virtual void setShouldAskSaveLocationType(bool shouldAsk) = 0;
 
-    virtual bool isCloudProject(const muse::io::path_t& projectPath) const = 0;
-    virtual bool isLegacyCloudProject(const muse::io::path_t& projectPath) const = 0;
-    virtual muse::io::path_t cloudProjectPath(int scoreId) const = 0;
-    virtual int cloudScoreIdFromPath(const muse::io::path_t& projectPath) const = 0;
 
-    virtual muse::io::path_t cloudProjectSavingPath(int scoreId = 0) const = 0;
 
     virtual muse::io::path_t defaultSavingFilePath(INotationProjectPtr project, const std::string& filenameAddition = "",
                                                    const std::string& suffix = "") const = 0;
 
-    virtual SaveLocationType lastUsedSaveLocationType() const = 0;
-    virtual void setLastUsedSaveLocationType(SaveLocationType type) = 0;
 
-    virtual bool shouldWarnBeforePublish() const = 0;
-    virtual void setShouldWarnBeforePublish(bool shouldWarn) = 0;
 
-    virtual bool shouldWarnBeforeSavingPubliclyToCloud() const = 0;
-    virtual void setShouldWarnBeforeSavingPubliclyToCloud(bool shouldWarn) = 0;
 
     virtual int homeScoresPageTabIndex() const = 0;
     virtual void setHomeScoresPageTabIndex(int index) = 0;
@@ -127,15 +112,8 @@ public:
     virtual void setAutoSaveInterval(int minutes) = 0;
     virtual muse::async::Channel<int> autoSaveIntervalChanged() const = 0;
 
-    virtual bool alsoShareAudioCom() const = 0;
-    virtual void setAlsoShareAudioCom(bool share) = 0;
-    virtual muse::async::Channel<bool> alsoShareAudioComChanged() const = 0;
 
-    virtual bool showAlsoShareAudioComDialog() const = 0;
-    virtual void setShowAlsoShareAudioComDialog(bool show) = 0;
 
-    virtual bool hasAskedAlsoShareAudioCom() const = 0;
-    virtual void setHasAskedAlsoShareAudioCom(bool has) = 0;
 
     virtual muse::io::path_t newProjectTemporaryPath() const = 0;
 
@@ -144,33 +122,13 @@ public:
     virtual bool shouldDestinationFolderBeOpenedOnExport() const = 0;
     virtual void setShouldDestinationFolderBeOpenedOnExport(bool shouldDestinationFolderBeOpenedOnExport) = 0;
 
-    virtual QUrl supportForumUrl() const = 0;
 
-    virtual QUrl dotComBugReportUrl() const = 0;
 
-    virtual QUrl scoreUploadingGuidelinesUrl() const = 0;
-    virtual QUrl termsOfUseUrl() const = 0;
 
-    virtual bool openDetailedProjectUploadedDialog() const = 0;
-    virtual void setOpenDetailedProjectUploadedDialog(bool show) = 0;
 
-    virtual bool hasAskedAudioGenerationSettings() const = 0;
-    virtual void setHasAskedAudioGenerationSettings(bool has) = 0;
-
-    virtual GenerateAudioTimePeriodType generateAudioTimePeriodType() const = 0;
-    virtual void setGenerateAudioTimePeriodType(GenerateAudioTimePeriodType type) = 0;
-    virtual muse::async::Channel<int> generateAudioTimePeriodTypeChanged() const = 0;
-
-    virtual int numberOfSavesToGenerateAudio() const = 0;
-    virtual void setNumberOfSavesToGenerateAudio(int number) = 0;
-    virtual muse::async::Channel<int> numberOfSavesToGenerateAudioChanged() const = 0;
-
-    virtual muse::io::path_t temporaryMp3FilePathTemplate() const = 0;
 
     virtual muse::io::path_t projectBackupPath(const muse::io::path_t& projectPath) const = 0;
 
-    virtual bool showCloudIsNotAvailableWarning() const = 0;
-    virtual void setShowCloudIsNotAvailableWarning(bool show) = 0;
 
     virtual bool disableVersionChecking() const = 0;
     virtual void setDisableVersionChecking(bool disable) = 0;
@@ -178,10 +136,7 @@ public:
     virtual bool createBackupBeforeSaving() const = 0;
     virtual void setCreateBackupBeforeSaving(bool create) = 0;
 
-    virtual bool showConvertFileProcessingDialog() const = 0;
-    virtual void setShowConvertFileProcessingDialog(bool show) = 0;
 
-    virtual muse::io::path_t watchedConvertsJsonPath() const = 0;
 };
 }
 

@@ -26,5 +26,6 @@ struct PaintOptions
 {
     bool isPrinting = false;
     bool invertColors = false;
+    bool showSelection = true;
 };
 }

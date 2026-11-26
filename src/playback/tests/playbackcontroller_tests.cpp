@@ -23,13 +23,16 @@
 #include <gtest/gtest.h>
 
 #include <vector>
+#include <QJsonDocument>
 
-#include "playback/internal/playbackcontroller.h"
-
-using namespace mu::engraving;
-using namespace mu::playback;
+#include "playback/internal/rememberedinputslot.h"
+#include "playback/internal/audibleinstrumenttracks.h"
+#include "project/audioinputparamsjson.h"
 
 namespace {
+using mu::engraving::InstrumentTrackId;
+using mu::engraving::InstrumentTrackIdSet;
+namespace detail = mu::playback::detail;
 InstrumentTrackId makeTrackId(int partId)
 {
     return { muse::ID(partId), u"instrument" };
@@ -70,8 +73,8 @@ TEST(PlaybackControllerTests, UnmutedPlaybackTracksAreAudible)
     });
 
     EXPECT_EQ(result.size(), 2u);
-    EXPECT_TRUE(result.contains(firstTrackId));
-    EXPECT_TRUE(result.contains(secondTrackId));
+    EXPECT_TRUE(result.count(firstTrackId) != 0);
+    EXPECT_TRUE(result.count(secondTrackId) != 0);
 }
 
 TEST(PlaybackControllerTests, PersistentOrExcerptMuteMakesTrackInaudible)
@@ -84,8 +87,8 @@ TEST(PlaybackControllerTests, PersistentOrExcerptMuteMakesTrackInaudible)
         makeTrackState(audibleTrackId)
     });
 
-    EXPECT_FALSE(result.contains(mutedTrackId));
-    EXPECT_TRUE(result.contains(audibleTrackId));
+    EXPECT_FALSE(result.count(mutedTrackId) != 0);
+    EXPECT_TRUE(result.count(audibleTrackId) != 0);
 }
 
 TEST(PlaybackControllerTests, SoloMakesNonSoloTracksInaudible)
@@ -98,8 +101,8 @@ TEST(PlaybackControllerTests, SoloMakesNonSoloTracksInaudible)
         makeTrackState(nonSoloTrackId)
     });
 
-    EXPECT_TRUE(result.contains(soloTrackId));
-    EXPECT_FALSE(result.contains(nonSoloTrackId));
+    EXPECT_TRUE(result.count(soloTrackId) != 0);
+    EXPECT_FALSE(result.count(nonSoloTrackId) != 0);
 }
 
 TEST(PlaybackControllerTests, DisabledChordSymbolsTrackIsInaudible)
@@ -114,9 +117,9 @@ TEST(PlaybackControllerTests, DisabledChordSymbolsTrackIsInaudible)
     const InstrumentTrackIdSet disabledResult = audibleTrackIds(trackStates, false);
     const InstrumentTrackIdSet enabledResult = audibleTrackIds(trackStates, true);
 
-    EXPECT_FALSE(disabledResult.contains(chordSymbolsTrackId));
-    EXPECT_TRUE(disabledResult.contains(notationTrackId));
-    EXPECT_TRUE(enabledResult.contains(chordSymbolsTrackId));
+    EXPECT_FALSE(disabledResult.count(chordSymbolsTrackId) != 0);
+    EXPECT_TRUE(disabledResult.count(notationTrackId) != 0);
+    EXPECT_TRUE(enabledResult.count(chordSymbolsTrackId) != 0);
 }
 
 TEST(PlaybackControllerTests, RangePlaybackOnlyAllowsSelectedTracks)
@@ -130,8 +133,8 @@ TEST(PlaybackControllerTests, RangePlaybackOnlyAllowsSelectedTracks)
         makeTrackState(outsideRangeTrackId)
     }, true, true, allowedInstrumentTrackIds);
 
-    EXPECT_TRUE(result.contains(selectedTrackId));
-    EXPECT_FALSE(result.contains(outsideRangeTrackId));
+    EXPECT_TRUE(result.count(selectedTrackId) != 0);
+    EXPECT_FALSE(result.count(outsideRangeTrackId) != 0);
 }
 
 TEST(PlaybackControllerTests, MetronomeIsExcludedAndDoesNotActivateSolo)
@@ -144,8 +147,8 @@ TEST(PlaybackControllerTests, MetronomeIsExcludedAndDoesNotActivateSolo)
         makeTrackState(metronomeTrackId, false, true, true, true)
     });
 
-    EXPECT_TRUE(result.contains(notationTrackId));
-    EXPECT_FALSE(result.contains(metronomeTrackId));
+    EXPECT_TRUE(result.count(notationTrackId) != 0);
+    EXPECT_FALSE(result.count(metronomeTrackId) != 0);
 }
 
 TEST(PlaybackControllerTests, TrackWithoutPlaybackChannelIsInaudible)
@@ -158,8 +161,8 @@ TEST(PlaybackControllerTests, TrackWithoutPlaybackChannelIsInaudible)
         makeTrackState(unloadedTrackId, false, false, false)
     });
 
-    EXPECT_TRUE(result.contains(loadedTrackId));
-    EXPECT_FALSE(result.contains(unloadedTrackId));
+    EXPECT_TRUE(result.count(loadedTrackId) != 0);
+    EXPECT_FALSE(result.count(unloadedTrackId) != 0);
 }
 
 TEST(PlaybackControllerTests, SoloTrackWithoutPlaybackChannelDoesNotMuteLoadedTracks)
@@ -172,6 +175,63 @@ TEST(PlaybackControllerTests, SoloTrackWithoutPlaybackChannelDoesNotMuteLoadedTr
         makeTrackState(unloadedSoloTrackId, false, true, false)
     });
 
-    EXPECT_TRUE(result.contains(loadedTrackId));
-    EXPECT_FALSE(result.contains(unloadedSoloTrackId));
+    EXPECT_TRUE(result.count(loadedTrackId) != 0);
+    EXPECT_FALSE(result.count(unloadedSoloTrackId) != 0);
+}
+
+TEST(PlaybackControllerTests, RememberedInputSlotsFollowPartOrder)
+{
+    const InstrumentTrackId metronomeId = makeTrackId(99);
+    const std::vector<muse::ID> orderedParts = { muse::ID(42), muse::ID(7) };
+    EXPECT_EQ(detail::rememberedInputSlot(makeTrackId(42), metronomeId, false, orderedParts), "position/1");
+    EXPECT_EQ(detail::rememberedInputSlot(makeTrackId(7), metronomeId, false, orderedParts), "position/2");
+    const InstrumentTrackId differentInstrument { muse::ID(42), u"flute" };
+    EXPECT_EQ(detail::rememberedInputSlot(differentInstrument, metronomeId, false, orderedParts), "position/1");
+    const std::vector<muse::ID> reorderedParts = { muse::ID(7), muse::ID(42) };
+    EXPECT_EQ(detail::rememberedInputSlot(makeTrackId(42), metronomeId, false, reorderedParts), "position/2");
+    EXPECT_EQ(detail::rememberedInputSlot(makeTrackId(8), metronomeId, false, orderedParts), "");
+}
+
+TEST(PlaybackControllerTests, RememberedInputSlotsSeparateMetronomeAndChords)
+{
+    const InstrumentTrackId metronomeId = makeTrackId(99);
+    const std::vector<muse::ID> orderedParts = { muse::ID(42), muse::ID(7) };
+    EXPECT_EQ(detail::rememberedInputSlot(metronomeId, metronomeId, false, orderedParts), "metronome");
+    EXPECT_EQ(detail::rememberedInputSlot(makeTrackId(42), metronomeId, true, orderedParts), "chords");
+    EXPECT_EQ(detail::rememberedInputSlot(makeTrackId(7), metronomeId, true, orderedParts), "chords");
+}
+
+TEST(PlaybackControllerTests, RememberedInputSlotJsonRoundTrip)
+{
+    muse::audio::AudioInputParams pick;
+    pick.resourceMeta.id = "reader.sf2";
+    pick.resourceMeta.vendor = "Local";
+    pick.resourceMeta.type = muse::audio::AudioResourceType::FluidSoundfont;
+    pick.resourceMeta.hasNativeEditorSupport = true;
+    pick.resourceMeta.attributes.emplace(u"preset", u"17");
+    pick.configuration.emplace("state", std::string("a\0b", 3));
+    const InstrumentTrackId metronomeId = makeTrackId(99);
+    const std::vector<muse::ID> orderedParts = { muse::ID(42), muse::ID(7) };
+    const QString slotName = QString::fromStdString(
+        detail::rememberedInputSlot(makeTrackId(7), metronomeId, false, orderedParts));
+    ASSERT_EQ(slotName, QString("position/2"));
+    QJsonObject slotInputs;
+    slotInputs.insert(slotName, mu::project::audioSettingsJson::inputParamsToJson(pick));
+    const QByteArray json = QJsonDocument(slotInputs).toJson(QJsonDocument::Compact);
+    const QJsonObject restoredSlots = QJsonDocument::fromJson(json).object();
+    ASSERT_TRUE(restoredSlots.contains("position/2"));
+    const QJsonObject slot = restoredSlots.value("position/2").toObject();
+    EXPECT_EQ(slot.value("resourceMeta").toObject().value("type").toString(), QString("fluid_soundfont"));
+    EXPECT_EQ(slot.value("unitConfiguration").toObject().value("state").toString(), QString("YQBi"));
+    const auto restored = mu::project::audioSettingsJson::inputParamsFromJson(slot);
+    ASSERT_TRUE(restored.isValid());
+    EXPECT_EQ(restored.resourceMeta.id, "reader.sf2");
+    EXPECT_EQ(restored.resourceMeta.vendor, "Local");
+    EXPECT_EQ(restored.resourceMeta.type, muse::audio::AudioResourceType::FluidSoundfont);
+    EXPECT_TRUE(restored.resourceMeta.hasNativeEditorSupport);
+    EXPECT_EQ(restored.resourceMeta.attributeVal(u"preset"), muse::String(u"17"));
+    ASSERT_EQ(restored.configuration.count("state"), 1u);
+    EXPECT_EQ(restored.configuration.at("state"), std::string("a\0b", 3));
+    EXPECT_TRUE(restored == pick);
+    EXPECT_FALSE(mu::project::audioSettingsJson::inputParamsFromJson(restoredSlots.value("position/3").toObject()).isValid());
 }

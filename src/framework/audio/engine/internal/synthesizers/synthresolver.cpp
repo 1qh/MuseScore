@@ -30,18 +30,6 @@ using namespace muse::async;
 using namespace muse::audio;
 using namespace muse::audio::synth;
 
-void SynthResolver::init(const AudioInputParams& defaultInputParams, const OutputSpec& defaultOutputSpec)
-{
-    ONLY_AUDIO_ENGINE_THREAD;
-
-    IF_ASSERT_FAILED(defaultInputParams.isValid() && defaultOutputSpec.isValid()) {
-        return;
-    }
-
-    m_defaultInputParams = defaultInputParams;
-    m_defaultOutputSpec = defaultOutputSpec;
-}
-
 ISynthesizerPtr SynthResolver::resolveSynth(const TrackId trackId, const AudioInputParams& params, const audio::OutputSpec& spec,
                                             const PlaybackSetupData& setupData) const
 {
@@ -50,7 +38,9 @@ ISynthesizerPtr SynthResolver::resolveSynth(const TrackId trackId, const AudioIn
     TRACEFUNC;
 
     if (!params.isValid()) {
-        LOGE() << "invalid audio source params for trackId: " << trackId;
+        if (!(params == AudioInputParams {})) {
+            LOGE() << "invalid audio source params for trackId: " << trackId;
+        }
         return nullptr;
     }
 
@@ -69,20 +59,6 @@ ISynthesizerPtr SynthResolver::resolveSynth(const TrackId trackId, const AudioIn
     }
 
     return resolver->resolveSynth(trackId, params, spec);
-}
-
-ISynthesizerPtr SynthResolver::resolveDefaultSynth(const TrackId trackId) const
-{
-    ONLY_AUDIO_ENGINE_THREAD;
-
-    return resolveSynth(trackId, m_defaultInputParams, m_defaultOutputSpec, {});
-}
-
-AudioInputParams SynthResolver::resolveDefaultInputParams() const
-{
-    ONLY_AUDIO_ENGINE_THREAD;
-
-    return m_defaultInputParams;
 }
 
 AudioResourceMetaList SynthResolver::resolveAvailableResources() const

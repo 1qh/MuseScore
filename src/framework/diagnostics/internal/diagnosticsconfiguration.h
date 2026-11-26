@@ -38,8 +38,6 @@ public:
 
     void init();
 
-    bool isDumpUploadAllowed() const override;
-    void setIsDumpUploadAllowed(bool val) override;
 
     bool shouldWarnBeforeSavingDiagnosticFiles() const override;
     void setShouldWarnBeforeSavingDiagnosticFiles(bool val) override;

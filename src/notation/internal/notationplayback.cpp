@@ -48,7 +48,6 @@ using namespace mu;
 using namespace mu::notation;
 using namespace mu::engraving;
 using namespace muse;
-using namespace muse::midi;
 using namespace muse::async;
 
 static constexpr double PLAYBACK_TAIL_SECS = 3;
@@ -116,7 +115,7 @@ void NotationPlayback::init()
         }
     });
 
-    score()->loopBoundaryTickChanged().onReceive(this, [this](LoopBoundaryType, unsigned) {
+    score()->loopBoundaryTickChanged().onReceive(this, [this](const LoopBoundaryType&, const unsigned&) {
         updateLoopBoundaries();
     });
 }
@@ -167,6 +166,31 @@ std::vector<muse::midi::note_idx_t> NotationPlayback::activePlaybackPitches(
     return m_playbackModel.activePlaybackPitches(muse::audio::secsToMicrosecs(position), includedTracks);
 }
 
+std::vector<InstrumentTrackIdSet> NotationPlayback::playbackTrackLayers(const InstrumentTrackIdSet& includedTracks) const
+{
+    std::vector<InstrumentTrackIdSet> layers;
+    if (!score()) {
+        return layers;
+    }
+    for (const Part* part : score()->parts()) {
+        InstrumentTrackIdSet tracks;
+        for (const InstrumentTrackId& track : part->instrumentTrackIdSet()) {
+            if (track != metronomeTrackId() && !isChordSymbolsTrack(track) && includedTracks.count(track)) {
+                tracks.insert(track);
+            }
+        }
+        layers.push_back(std::move(tracks));
+    }
+    InstrumentTrackIdSet chords;
+    for (const InstrumentTrackId& track : includedTracks) {
+        if (track != metronomeTrackId() && isChordSymbolsTrack(track)) {
+            chords.insert(track);
+        }
+    }
+    layers.push_back(std::move(chords));
+    return layers;
+}
+
 void NotationPlayback::triggerEventsForItems(const std::vector<const EngravingItem*>& items, muse::mpe::duration_t duration,
                                              bool flushSound)
 {
@@ -209,6 +233,17 @@ void NotationPlayback::triggerControllers(const muse::mpe::ControllerChangeEvent
     m_playbackModel.sendOffStreamEvents(trackId, events, {}, false /*flushOffstream*/);
 }
 
+muse::secs_t NotationPlayback::setExportCountIn(bool enabled)
+{
+    const auto duration = m_playbackModel.setExportCountIn(enabled);
+    if (duration < 0) {
+        return -1;
+    }
+    m_exportCountInDuration = audio::microsecsToSecs(duration);
+    updateTotalPlayTime();
+    return m_exportCountInDuration;
+}
+
 InstrumentTrackIdSet NotationPlayback::existingTrackIdSet() const
 {
     return m_playbackModel.existingTrackIdSet();
@@ -246,7 +281,7 @@ void NotationPlayback::updateTotalPlayTime()
 
     int lastTick = score->repeatList(m_playbackModel.isPlayRepeatsEnabled()).ticks();
     audio::secs_t newPlayTime = score->utick2utime(lastTick);
-    newPlayTime += PLAYBACK_TAIL_SECS;
+    newPlayTime += PLAYBACK_TAIL_SECS + m_exportCountInDuration;
 
     if (m_totalPlayTime == newPlayTime) {
         return;
@@ -266,12 +301,12 @@ muse::async::Channel<muse::audio::secs_t> NotationPlayback::totalPlayTimeChanged
     return m_totalPlayTimeChanged;
 }
 
-muse::audio::secs_t NotationPlayback::playedTickToSec(tick_t tick) const
+muse::audio::secs_t NotationPlayback::playedTickToSec(muse::midi::tick_t tick) const
 {
     return score() ? score()->utick2utime(tick) : 0.0;
 }
 
-tick_t NotationPlayback::secToPlayedTick(muse::audio::secs_t sec) const
+muse::midi::tick_t NotationPlayback::secToPlayedTick(muse::audio::secs_t sec) const
 {
     if (!score()) {
         return 0;
@@ -280,13 +315,13 @@ tick_t NotationPlayback::secToPlayedTick(muse::audio::secs_t sec) const
     return score()->utime2utick(sec);
 }
 
-tick_t NotationPlayback::secToTick(muse::audio::secs_t sec) const
+muse::midi::tick_t NotationPlayback::secToTick(muse::audio::secs_t sec) const
 {
     if (!score()) {
         return 0;
     }
 
-    tick_t utick = secToPlayedTick(sec);
+    muse::midi::tick_t utick = secToPlayedTick(sec);
 
     return score()->repeatList(m_playbackModel.isPlayRepeatsEnabled()).utick2tick(utick);
 }
@@ -315,7 +350,7 @@ RetVal<muse::midi::tick_t> NotationPlayback::playPositionTickByElement(const Eng
     return playPositionTickByRawTick(element->tick().ticks());
 }
 
-void NotationPlayback::addLoopBoundary(LoopBoundaryType boundaryType, tick_t tick)
+void NotationPlayback::addLoopBoundary(LoopBoundaryType boundaryType, muse::midi::tick_t tick)
 {
     const Measure* first = score()->firstMeasure();
     const Measure* last = score()->lastMeasure();
@@ -400,7 +435,7 @@ Notification NotationPlayback::loopBoundariesChanged() const
     return m_loopBoundariesChanged;
 }
 
-const Tempo& NotationPlayback::multipliedTempo(tick_t tick) const
+const Tempo& NotationPlayback::multipliedTempo(muse::midi::tick_t tick) const
 {
     if (!score()) {
         static Tempo empty;
@@ -412,12 +447,12 @@ const Tempo& NotationPlayback::multipliedTempo(tick_t tick) const
     return m_currentTempo;
 }
 
-MeasureBeat NotationPlayback::beat(tick_t tick) const
+MeasureBeat NotationPlayback::beat(muse::midi::tick_t tick) const
 {
     return mu::engraving::findBeat(m_getScore->score(), tick);
 }
 
-tick_t NotationPlayback::beatToRawTick(int measureIndex, int beatIndex) const
+muse::midi::tick_t NotationPlayback::beatToRawTick(int measureIndex, int beatIndex) const
 {
     return score() ? score()->sigmap()->bar2tick(measureIndex, beatIndex) : 0;
 }

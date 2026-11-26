@@ -130,7 +130,7 @@ inline samples_t minSamplesToReserve(RenderMode mode)
         return 128;
     }
 
-    // Active: render more for better quality (rendering is usually much heavier in this scenario)
-    return 1024;
+    //! NOTE MuseScoreLite plays a MIDI keyboard over playback, so the audio buffer size alone sets the latency
+    return 128;
 }
 }

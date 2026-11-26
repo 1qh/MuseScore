@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <map>
 #include <functional>
+#include <optional>
 
 #include "async/asyncable.h"
 #include "async/channel.h"
@@ -94,6 +95,7 @@ public:
     void triggerEventsForItems(const std::vector<const EngravingItem*>& items, muse::mpe::duration_t duration, bool flushSound);
     void triggerMetronome(int tick);
     void triggerCountIn(int tick, muse::mpe::duration_t& countInDuration);
+    muse::mpe::duration_t setExportCountIn(bool enabled);
 
     InstrumentTrackIdSet existingTrackIdSet() const;
     muse::async::Channel<InstrumentTrackId> trackAdded() const;
@@ -180,6 +182,7 @@ private:
 
     std::unordered_map<InstrumentTrackId, PlaybackContextPtr> m_playbackCtxMap;
     std::unordered_map<InstrumentTrackId, muse::mpe::PlaybackData> m_playbackDataMap;
+    std::optional<std::unordered_map<InstrumentTrackId, muse::mpe::PlaybackData> > m_exportRestoreData;
     std::unordered_map<InstrumentTrackId, bool> m_sendEventsOnScoreChangeMap;
 
     mutable PlaybackNoteIndex m_activePlaybackNoteIndex;

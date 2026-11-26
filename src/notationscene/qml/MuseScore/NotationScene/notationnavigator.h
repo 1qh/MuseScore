@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <QList>
 #include <QObject>
 #include <QMouseEvent>
 #include <QPainter>
@@ -35,6 +36,8 @@
 #include "ui/iuiconfiguration.h"
 #include "engraving/iengravingconfiguration.h"
 #include "abstractnotationpaintview.h"
+
+class QScreen;
 
 namespace mu::notation {
 class NotationNavigatorCursorView : public QQuickPaintedItem, public muse::Contextable
@@ -59,6 +62,7 @@ class NotationNavigator : public AbstractNotationPaintView
     Q_OBJECT
 
     Q_PROPERTY(int orientation READ orientation NOTIFY orientationChanged)
+    Q_PROPERTY(bool fitFullContent MEMBER m_fitFullContent)
 
     QML_ELEMENT;
 
@@ -81,15 +85,19 @@ signals:
 
 private:
     void onLoadNotation(INotationPtr notation) override;
+    void onUnloadNotation(INotationPtr notation) override;
 
     void initOrientation();
     void initVisible();
+    void observeWindow(QQuickWindow* viewWindow);
+    void observeScreen(QScreen* screen);
 
     ViewMode notationViewMode() const;
 
     void rescaleIfVisible();
 
     void paint(QPainter* painter) override;
+    void updatePolish() override;
     void onViewSizeChanged() override;
 
     void wheelEvent(QWheelEvent* event) override;
@@ -104,7 +112,12 @@ private:
 
     const PageList& pages() const;
 
+    bool m_fitFullContent = false;
+    muse::async::Asyncable m_contentReceiver;
+    QList<QMetaObject::Connection> m_windowConnections;
+    QMetaObject::Connection m_screenConnection;
     muse::RectF m_cursorRect;
+    QRectF m_viewportRect;
     NotationNavigatorCursorView* m_cursorRectView = nullptr;
     muse::PointF m_startMove;
 };

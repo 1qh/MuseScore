@@ -39,8 +39,6 @@ static const Settings::Key DEV_MODE_ENABLED_KEY("global", "application/devModeEn
 static const Settings::Key METRIC_UNIT_KEY("global", "application/metricUnit");
 static const Settings::Key HIGH_RESOLUTION_TIMERS("global", "application/highResolutionTimers");
 
-static const std::string MUSESCORE_URL("https://www.musescore.org/");
-static const std::string MUSEHUB_WEB_URL("https://www.musehub.com/");
 
 void GlobalConfiguration::init()
 {
@@ -107,7 +105,8 @@ QString GlobalConfiguration::resolveUserAppDataPath() const
 #elif defined(Q_OS_WASM)
     return QString("/files/data");
 #else
-    return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    // MuseScoreLite keeps all its data and the user's folders together under ~/mslite
+    return QDir::homePath() + "/mslite";
 #endif
 }
 
@@ -118,7 +117,7 @@ io::path_t GlobalConfiguration::userBackupPath() const
 
 io::path_t GlobalConfiguration::userDataPath() const
 {
-    static io::path_t p = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + QCoreApplication::applicationName();
+    static io::path_t p = QDir::homePath() + "/mslite";
     return p;
 }
 
@@ -174,16 +173,6 @@ bool GlobalConfiguration::metricUnit() const
 void GlobalConfiguration::setMetricUnit(bool metricUnit)
 {
     settings()->setSharedValue(METRIC_UNIT_KEY, Val(metricUnit));
-}
-
-std::string GlobalConfiguration::museScoreUrl() const
-{
-    return MUSESCORE_URL;
-}
-
-std::string GlobalConfiguration::museHubWebUrl() const
-{
-    return MUSEHUB_WEB_URL;
 }
 
 bool GlobalConfiguration::highResolutionTimers() const

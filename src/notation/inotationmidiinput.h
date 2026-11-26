@@ -23,12 +23,9 @@
 #pragma once
 
 #include "async/channel.h"
+#include "midi/midievent.h"
 
 #include "notationtypes.h"
-
-namespace muse::midi {
-struct Event;
-}
 
 namespace mu::notation {
 class INotationMidiInput
@@ -38,6 +35,8 @@ public:
 
     virtual void onMidiEventReceived(const muse::midi::Event& event) = 0;
     virtual muse::async::Channel<std::vector<const Note*> > notesReceived() const = 0;
+
+    virtual muse::async::Channel<muse::midi::Event> noteEventsReceived() const = 0;
 
     virtual void onRealtimeAdvance() = 0;
 };

@@ -81,6 +81,7 @@ RowLayout {
     }
 
     Item {
+        implicitWidth: expandButton.width + 4 + titleLabel.implicitWidth + 8
         Layout.fillWidth: true
         Layout.leftMargin: 12 * root.expandableDepth
         height: childrenRect.height

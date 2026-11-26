@@ -37,19 +37,6 @@ class IAppShellConfiguration : MODULE_GLOBAL_INTERFACE
 public:
     virtual ~IAppShellConfiguration() = default;
 
-    virtual bool hasCompletedFirstLaunchSetup() const = 0;
-    virtual void setHasCompletedFirstLaunchSetup(bool has) = 0;
-
-    virtual bool welcomeDialogShowOnStartup() const = 0;
-    virtual void setWelcomeDialogShowOnStartup(bool show) = 0;
-    virtual muse::async::Notification welcomeDialogShowOnStartupChanged() const = 0;
-
-    virtual std::string welcomeDialogLastShownVersion() const = 0;
-    virtual void setWelcomeDialogLastShownVersion(const std::string& version) = 0;
-
-    virtual int welcomeDialogLastShownIndex() const = 0;
-    virtual void setWelcomeDialogLastShownIndex(int index) = 0;
-
     virtual StartupModeType startupModeType() const = 0;
     virtual void setStartupModeType(StartupModeType type) = 0;
     virtual muse::async::Notification startupModeTypeChanged() const = 0;
@@ -58,13 +45,6 @@ public:
     virtual void setStartupScorePath(const muse::io::path_t& scorePath) = 0;
     virtual muse::async::Notification startupScorePathChanged() const = 0;
 
-    virtual std::string handbookUrl() const = 0;
-    virtual std::string askForHelpUrl() const = 0;
-    virtual std::string accessibilityStatementUrl() const = 0;
-    virtual std::string museScoreUrl() const = 0;
-    virtual std::string museScoreForumUrl() const = 0;
-    virtual std::string museScoreContributionUrl() const = 0;
-    virtual std::string museHubFreeMuseSoundsUrl() const = 0;
     virtual std::string musicXMLLicenseUrl() const = 0;
     virtual std::string musicXMLLicenseDeedUrl() const = 0;
 

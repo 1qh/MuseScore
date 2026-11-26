@@ -60,6 +60,7 @@ class DockBase : public QQuickItem, public Contextable
     Q_PROPERTY(QVariantList dropDestinations READ dropDestinationsProperty WRITE setDropDestinations NOTIFY dropDestinationsChanged)
 
     Q_PROPERTY(bool floatable READ floatable WRITE setFloatable NOTIFY floatableChanged)
+    Q_PROPERTY(bool defaultFloating READ defaultFloating WRITE setDefaultFloating NOTIFY defaultFloatingChanged)
     Q_PROPERTY(bool closable READ closable WRITE setClosable NOTIFY closableChanged)
     Q_PROPERTY(bool resizable READ resizable WRITE setResizable NOTIFY resizableChanged)
     Q_PROPERTY(bool separatorsVisible READ separatorsVisible WRITE setSeparatorsVisible NOTIFY separatorsVisibleChanged)
@@ -99,6 +100,7 @@ public:
     QList<DropDestination> dropDestinations() const;
 
     bool floatable() const;
+    bool defaultFloating() const;
     bool closable() const;
     bool resizable() const;
     bool separatorsVisible() const;
@@ -129,6 +131,7 @@ public:
     Q_INVOKABLE void open();
     Q_INVOKABLE void close();
     Q_INVOKABLE void resize(int width, int height);
+    void keepFloatingWindowOnScreen();
 
     ui::INavigationSection* navigationSection() const;
     ui::NavigationSection* navigationSection_property() const;
@@ -148,6 +151,7 @@ public slots:
     void setDropDestinations(const QVariantList& destinations);
 
     void setFloatable(bool floatable);
+    void setDefaultFloating(bool floating);
     void setClosable(bool closable);
     void setResizable(bool resizable);
     void setSeparatorsVisible(bool visible);
@@ -171,6 +175,7 @@ signals:
     void dropDestinationsChanged();
 
     void floatableChanged();
+    void defaultFloatingChanged();
     void closableChanged();
     void resizableChanged();
     void separatorsVisibleChanged();
@@ -210,6 +215,7 @@ private:
     void writeProperties();
 
     void setInited(bool inited);
+    void fitContentOnFirstOpen();
 
     QString m_title;
 
@@ -224,6 +230,9 @@ private:
     QVariantList m_dropDestinations;
 
     bool m_defaultVisibility = false;
+    bool m_defaultFloating = false;
+    bool m_fitContentPending = false;
+    QSize m_defaultSize;
 
     bool m_isCompact = false;
     int m_compactPriorityOrder = -1;

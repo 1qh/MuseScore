@@ -80,12 +80,7 @@ public:
     QString displayName() const override;
     muse::async::Notification displayNameChanged() const override;
 
-    bool isCloudProject() const override;
-    const CloudProjectInfo& cloudInfo() const override;
-    void setCloudInfo(const CloudProjectInfo& info) override;
 
-    const CloudAudioInfo& cloudAudioInfo() const override;
-    void setCloudAudioInfo(const CloudAudioInfo& audioInfo) override;
 
     bool isNewlyCreated() const override;
     void markAsNewlyCreated() override;
@@ -140,8 +135,6 @@ private:
     mu::engraving::EngravingProjectPtr m_engravingProject = nullptr;
     notation::IMasterNotationPtr m_masterNotation = nullptr;
     ProjectAudioSettingsPtr m_projectAudioSettings = nullptr;
-    mutable CloudProjectInfo m_cloudInfo;
-    mutable CloudAudioInfo m_cloudAudioInfo;
 
     muse::io::path_t m_path;
     muse::async::Notification m_pathChanged;

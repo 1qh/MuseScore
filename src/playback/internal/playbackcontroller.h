@@ -35,34 +35,15 @@
 #include "audio/main/iplayback.h"
 #include "audio/common/audiotypes.h"
 #include "iinteractive.h"
-#include "tours/itoursservice.h"
 
 #include "drumsetloader.h"
+#include "audibleinstrumenttracks.h"
 
 #include "../iplaybackcontroller.h"
 #include "../iplaybackconfiguration.h"
 #include "../isoundprofilesrepository.h"
 
 namespace mu::playback {
-class OnlineSoundsController;
-namespace detail {
-struct InstrumentTrackSoloMuteState {
-    engraving::InstrumentTrackId instrumentTrackId;
-    IPlaybackController::SoloMuteState soloMuteState;
-    bool hasPlaybackTrack = false;
-    bool isMetronome = false;
-    bool isChordSymbols = false;
-};
-struct EffectiveTrackSoloMuteState {
-    engraving::InstrumentTrackId instrumentTrackId;
-    IPlaybackController::SoloMuteState soloMuteState;
-    bool forceMute = false;
-};
-std::vector<EffectiveTrackSoloMuteState> resolveEffectiveTrackSoloMuteStates(
-    const std::vector<InstrumentTrackSoloMuteState>& trackStates, bool playChordSymbols, bool isRangePlaybackMode,
-    const engraving::InstrumentTrackIdSet& allowedInstrumentTrackIds);
-engraving::InstrumentTrackIdSet audibleInstrumentTrackIds(const std::vector<EffectiveTrackSoloMuteState>& trackStates);
-}
 class PlaybackController : public IPlaybackController, public muse::actions::Actionable, public muse::async::Asyncable,
     public muse::Contextable
 {
@@ -73,7 +54,6 @@ class PlaybackController : public IPlaybackController, public muse::actions::Act
     muse::ContextInject<muse::audio::IPlayback> playback = { this };
     muse::ContextInject<ISoundProfilesRepository> profilesRepo = { this };
     muse::ContextInject<muse::IInteractive> interactive = { this };
-    muse::ContextInject<muse::tours::IToursService> tours = { this };
 
 public:
     PlaybackController(const muse::modularity::ContextPtr& iocCtx);
@@ -96,14 +76,10 @@ public:
 
     const InstrumentTrackIdMap& instrumentTrackIdMap() const override;
     engraving::InstrumentTrackIdSet audibleInstrumentTrackIds() const override;
-    const AuxTrackIdMap& auxTrackIdMap() const override;
 
     muse::async::Channel<muse::audio::TrackId> trackAdded() const override;
     muse::async::Channel<muse::audio::TrackId> trackRemoved() const override;
     muse::async::Channel<bool> playbackInitedChanged() const override;
-
-    std::string auxChannelName(muse::audio::aux_channel_idx_t index) const override;
-    muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> auxChannelNameChanged() const override;
 
     muse::async::Promise<muse::audio::SoundPresetList> availableSoundPresets(
         const engraving::InstrumentTrackId& instrumentTrackId) const override;
@@ -148,9 +124,6 @@ public:
 
     bool canReceiveAction(const muse::actions::ActionCode& code) const override;
 
-    const std::map<muse::audio::TrackId, muse::audio::AudioResourceMeta>& onlineSounds() const override;
-    muse::async::Notification onlineSoundsChanged() const override;
-    muse::Progress onlineSoundsProcessingProgress() const override;
 
 private:
     muse::audio::IPlayerPtr currentPlayer() const;
@@ -242,7 +215,7 @@ private:
                   const TrackAddFinished& onFinished);
     void doAddTrack(const engraving::InstrumentTrackId& instrumentTrackId, const std::string& title, bool projectHadNoAudioSettings,
                     const TrackAddFinished& onFinished);
-    void addAuxTrack(muse::audio::aux_channel_idx_t index, bool projectHadNoAudioSettings, const TrackAddFinished& onFinished);
+    void addAuxTrack(muse::audio::aux_channel_idx_t index, const TrackAddFinished& onFinished);
 
     void setTrackActivity(const engraving::InstrumentTrackId& instrumentTrackId, const bool isActive);
     muse::audio::AudioOutputParams trackOutputParams(const engraving::InstrumentTrackId& instrumentTrackId) const;
@@ -273,8 +246,6 @@ private:
     muse::async::Channel<muse::audio::TrackId> m_trackRemoved;
     muse::async::Channel<bool> m_playbackInitedChanged;
 
-    muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> m_auxChannelNameChanged;
-
     muse::async::Asyncable m_seqAsyncReceiver; //! HACK - see PlaybackController::setupSequenceTracks
 
     InstrumentTrackIdMap m_instrumentTrackIdMap;
@@ -287,7 +258,6 @@ private:
     bool m_isRangeSelection = false;
 
     DrumsetLoader m_drumsetLoader;
-    std::unique_ptr<OnlineSoundsController> m_onlineSoundsController;
 
     bool m_measureInputLag = false;
 };

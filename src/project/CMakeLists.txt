@@ -42,13 +42,9 @@ target_sources(project PRIVATE
     iprojectautosaver.h
     iprojectrwregister.h
     iprojectwriter.h
-    iconvertfiletoscorescenario.h
-    iconvertfiletoscoreservice.h
-    ideletecloudscorescenario.h
 
     types/projecttypes.h
     types/projectmeta.h
-    types/converttypes.h
 
     internal/iprojectmigrator.h
     internal/notationproject.cpp
@@ -63,12 +59,6 @@ target_sources(project PRIVATE
     internal/notationwritersregister.h
     internal/projectautosaver.cpp
     internal/projectautosaver.h
-    internal/convertfiletoscorescenario.cpp
-    internal/convertfiletoscorescenario.h
-    internal/convertfiletoscoreservice.cpp
-    internal/convertfiletoscoreservice.h
-    internal/deletecloudscorescenario.cpp
-    internal/deletecloudscorescenario.h
     internal/projectactionscontroller.cpp
     internal/projectactionscontroller.h
     internal/engravingpluginapihelper.cpp

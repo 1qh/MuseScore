@@ -47,12 +47,7 @@ Item {
     signal createNewScoreRequested()
     signal openScoreRequested(var scorePath, var displayName)
     signal revealInFileBrowserRequested(var scorePath)
-    signal viewOnlineRequested(var scoreId)
     signal removeFromRecentFilesRequested(var scorePath)
-    signal deleteScoreRequested(var scoreId, var scoreName)
-    signal retryRequested()
-    signal cancelConversionRequested(int convertType, int convertId)
-    signal cancelUploadRequested(int uploadId)
 
     clip: true
 
@@ -178,19 +173,13 @@ Item {
                 thumbnailUrl: score.thumbnailUrl ?? ""
                 isCreateNew: score.isCreateNew
                 isNoResultsFound: score.isNoResultsFound
-                processingStatus: score.processingStatus
-                convertType: score.convertType ?? 0
-                convertId: score.convertId ?? 0
-                uploadId: score.uploadId
-                isCloud: score.isCloud
-                cloudScoreId: score.scoreId ?? 0
                 timeSinceModified: score.timeSinceModified ?? ""
                 showRemoveFromRecentFiles: root.allowRemoveFromRecentFiles
 
                 onClicked: {
                     if (item.isCreateNew) {
                         root.createNewScoreRequested()
-                    } else if (!item.isNoResultsFound && !item.isProcessing) {
+                    } else if (!item.isNoResultsFound) {
                         root.openScoreRequested(score.path, score.name)
                     }
                 }
@@ -199,27 +188,13 @@ Item {
                     root.revealInFileBrowserRequested(scorePath)
                 }
 
-                onViewOnlineRequested: function(scoreId) {
-                    root.viewOnlineRequested(scoreId)
-                }
 
                 onRemoveFromRecentFilesRequested: function(scorePath) {
                     root.removeFromRecentFilesRequested(scorePath)
                 }
 
-                onDeleteScoreRequested: function(scoreId, scoreName) {
-                    root.deleteScoreRequested(scoreId, scoreName)
-                }
 
-                onRetryRequested: root.retryRequested()
 
-                onCancelUploadRequested: function(uploadId) {
-                    root.cancelUploadRequested(uploadId)
-                }
-
-                onCancelConversionRequested: function(convertType, convertId) {
-                    root.cancelConversionRequested(convertType, convertId)
-                }
             }
         }
     }

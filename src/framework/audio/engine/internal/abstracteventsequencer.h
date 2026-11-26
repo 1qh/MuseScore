@@ -199,13 +199,25 @@ public:
 
         // Empty sequence means to continue the previous sequence
         result.emplace(m_playbackPosition, EventSequence());
+        const msecs_t blockStart = m_playbackPosition;
         m_playbackPosition += nextMsecs;
 
-        if (m_currentMainSequenceIt == m_mainStreamEvents.cend()) {
-            return result;
+        if (m_currentMainSequenceIt != m_mainStreamEvents.cend()) {
+            handleMainStream(result);
         }
 
-        handleMainStream(result);
+        //! NOTE MuseScoreLite sounds live input (a MIDI keyboard, a clicked key) while the score plays: the off-stream
+        //! events of this block move onto the playback timeline, keeping their offsets from the block's start
+        if (m_currentOffSequenceIt != m_offStreamEvents.cend()) {
+            EventSequenceMap live;
+            const msecs_t shift = blockStart - m_offstreamPosition;
+            m_offstreamPosition += nextMsecs;
+            handleOffStream(live);
+            for (auto& [position, sequence] : live) {
+                EventSequence& target = result[position + shift];
+                target.insert(target.end(), std::make_move_iterator(sequence.begin()), std::make_move_iterator(sequence.end()));
+            }
+        }
 
         return result;
     }

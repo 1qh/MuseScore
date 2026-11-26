@@ -66,7 +66,7 @@ void AppShellModule::registerExports()
     ioc()->registerExport<ISessionsManager>(moduleName(), m_sessionsManager);
 
 #ifdef Q_OS_MAC
-    ioc()->registerExport<IAppMenuModelHook>(moduleName(), std::make_shared<MacOSAppMenuModelHook>());
+    ioc()->registerExport<IAppMenuModelHook>(moduleName(), std::make_shared<MacOSAppMenuModelHook>(iocContext()));
 #else
     ioc()->registerExport<IAppMenuModelHook>(moduleName(), std::make_shared<AppMenuModelHookStub>());
 #endif
@@ -78,15 +78,11 @@ void AppShellModule::resolveImports()
     if (ir) {
         ir->registerPageUri(Uri("musescore://home"));
         ir->registerPageUri(Uri("musescore://notation"));
-        ir->registerPageUri(Uri("musescore://notation/review"));
         ir->registerPageUri(Uri("musescore://sequencer"));
-        ir->registerPageUri(Uri("musescore://publish"));
         ir->registerPageUri(Uri("musescore://devtools"));
 
         ir->registerQmlUri(Uri("musescore://about/musescore"), "MuseScore.AppShell", "AboutDialog");
         ir->registerQmlUri(Uri("musescore://about/musicxml"), "MuseScore.AppShell", "AboutMusicXMLDialog");
-        ir->registerQmlUri(Uri("musescore://welcomedialog"), "MuseScore.AppShell", "WelcomeDialog");
-        ir->registerQmlUri(Uri("musescore://firstLaunchSetup"), "MuseScore.AppShell", "FirstLaunchSetupDialog");
     }
 }
 

@@ -52,7 +52,6 @@ MixerPanelSection {
             anchors.horizontalCenter: parent.horizontalCenter
             height: 26
 
-            supportsByPassing: false
             resourceItemModel: content.channelItem.inputResourceItem ?? null
 
             navigationPanel: content.channelItem.panel

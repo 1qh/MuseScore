@@ -53,9 +53,13 @@ public:
     virtual std::vector<muse::midi::note_idx_t> activePlaybackPitches(
         muse::audio::secs_t position, const engraving::InstrumentTrackIdSet& includedTracks) const = 0;
 
+    virtual std::vector<engraving::InstrumentTrackIdSet> playbackTrackLayers(
+        const engraving::InstrumentTrackIdSet& includedTracks) const = 0;
+
     virtual void triggerEventsForItems(const std::vector<const EngravingItem*>& items, muse::mpe::duration_t duration, bool flushSound) = 0;
     virtual void triggerMetronome(muse::midi::tick_t tick) = 0;
     virtual void triggerCountIn(muse::midi::tick_t tick, muse::secs_t& countInDuration) = 0;
+    virtual muse::secs_t setExportCountIn(bool enabled) = 0;
     virtual void triggerControllers(const muse::mpe::ControllerChangeEventList& list, notation::staff_idx_t staffIdx, int tick) = 0;
 
     virtual engraving::InstrumentTrackIdSet existingTrackIdSet() const = 0;

@@ -38,7 +38,7 @@ CrashHandler::~CrashHandler()
     delete m_client;
 }
 
-bool CrashHandler::start(const muse::io::path_t& handlerFilePath, const muse::io::path_t& dumpsDir, const std::string& serverUrl)
+bool CrashHandler::start(const muse::io::path_t& handlerFilePath, const muse::io::path_t& dumpsDir)
 {
     if (!fileSystem()->exists(handlerFilePath)) {
         LOGE() << "crash handler not exists, path: " << handlerFilePath;
@@ -65,12 +65,10 @@ bool CrashHandler::start(const muse::io::path_t& handlerFilePath, const muse::io
     };
     // Optional arguments to pass to the handler
     std::vector<std::string> arguments;
-    arguments.push_back("--no-rate-limit");
-    arguments.push_back("--no-upload-gzip");
 
     std::unique_ptr<CrashReportDatabase> db = crashpad::CrashReportDatabase::Initialize(database);
     if (db != nullptr && db->GetSettings() != nullptr) {
-        db->GetSettings()->SetUploadsEnabled(true);
+        db->GetSettings()->SetUploadsEnabled(false);
     }
 
     removePendingLockFiles(dumpsDir);
@@ -80,7 +78,7 @@ bool CrashHandler::start(const muse::io::path_t& handlerFilePath, const muse::io
         handler,
         database,
         database,
-        serverUrl,
+        std::string(),
         annotations,
         arguments,
         true, // restartable

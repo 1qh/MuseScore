@@ -47,8 +47,6 @@ public:
     virtual bool saveProjectLocally(
         const muse::io::path_t& path = muse::io::path_t(), SaveMode saveMode = SaveMode::Save, bool createBackup = true) = 0;
 
-    virtual const ProjectBeingDownloaded& projectBeingDownloaded() const = 0;
-    virtual muse::async::Notification projectBeingDownloadedChanged() const = 0;
 
     virtual muse::Uri resolveNotationPageUri() const = 0;
 };

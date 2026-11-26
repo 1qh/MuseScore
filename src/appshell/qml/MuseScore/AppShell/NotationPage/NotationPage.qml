@@ -117,11 +117,16 @@ DockPage {
         DockToolBar {
             id: notationToolBar
 
+            defaultFloating: true
+
             objectName: "notationToolBar"
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Notation toolbar")
 
-            floatable: false
-            closable: false
+            floatable: true
+            closable: true
             resizable: false
             separatorsVisible: false
 
@@ -139,7 +144,13 @@ DockPage {
         DockToolBar {
             id: playbackToolBar
 
+            defaultFloating: true
+            floatable: true
+
             objectName: root.pageModel.playbackToolBarName()
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Playback controls")
 
             separatorsVisible: false
@@ -166,9 +177,16 @@ DockPage {
         DockToolBar {
             id: extDockToolBar
 
+            defaultFloating: true
+            floatable: true
+
             objectName: root.pageModel.extensionsToolBarName()
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Extensions toolbar")
 
+            resizable: !floating
             separatorsVisible: false
             orientation: Qt.Horizontal
             alignment: DockToolBarAlignment.Right
@@ -194,11 +212,16 @@ DockPage {
         DockToolBar {
             id: undoRedoToolBar
 
+            defaultFloating: true
+
             objectName: root.pageModel.undoRedoToolBarName()
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Undo/redo")
 
-            floatable: false
-            closable: false
+            floatable: true
+            closable: true
             resizable: false
             separatorsVisible: false
 
@@ -218,7 +241,13 @@ DockPage {
         DockToolBar {
             id: noteInputBar
 
+            defaultFloating: true
+            floatable: true
+
             objectName: root.pageModel.noteInputBarName()
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Note input")
 
             dropDestinations: [
@@ -249,18 +278,25 @@ DockPage {
     panels: [
         DockPanel {
             id: palettesPanel
+            fitFloatingContent: true
+
+            defaultFloating: true
+            floatable: true
 
             objectName: root.pageModel.palettesPanelName()
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Palettes")
 
             navigationSection: root.navigationPanelSec(palettesPanel.location)
 
             width: root.verticalPanelDefaultWidth
-            minimumWidth: root.verticalPanelDefaultWidth
-            maximumWidth: root.verticalPanelDefaultWidth
+            minimumWidth: floating ? root.panelMinDimension : root.verticalPanelDefaultWidth
+            maximumWidth: floating ? Math.max(root.panelMaxDimension, naturalContentSize.width) : root.verticalPanelDefaultWidth
 
             minimumHeight: root.panelMinDimension
-            maximumHeight: root.panelMaxDimension
+            maximumHeight: Math.max(root.panelMaxDimension, naturalContentSize.height)
 
             groupName: root.verticalPanelsGroup
 
@@ -278,18 +314,25 @@ DockPage {
 
         DockPanel {
             id: layoutPanel
+            fitFloatingContent: true
+
+            defaultFloating: true
+            floatable: true
 
             objectName: root.pageModel.layoutPanelName()
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Layout")
 
             navigationSection: root.navigationPanelSec(layoutPanel.location)
 
             width: root.verticalPanelDefaultWidth
-            minimumWidth: root.verticalPanelDefaultWidth
-            maximumWidth: root.verticalPanelDefaultWidth
+            minimumWidth: floating ? root.panelMinDimension : root.verticalPanelDefaultWidth
+            maximumWidth: floating ? Math.max(root.panelMaxDimension, naturalContentSize.width) : root.verticalPanelDefaultWidth
 
             minimumHeight: root.panelMinDimension
-            maximumHeight: root.panelMaxDimension
+            maximumHeight: Math.max(root.panelMaxDimension, naturalContentSize.height)
 
             groupName: root.verticalPanelsGroup
 
@@ -308,14 +351,20 @@ DockPage {
         DockPanel {
             id: inspectorPanel
 
+            defaultFloating: true
+            floatable: true
+
             objectName: root.pageModel.inspectorPanelName()
+
+            // Hidden on open: the score view starts as the sheet alone
+            visible: false
             title: qsTrc("appshell", "Properties")
 
             navigationSection: root.navigationPanelSec(inspectorPanel.location)
 
             width: root.verticalPanelDefaultWidth
             minimumWidth: root.verticalPanelDefaultWidth
-            maximumWidth: root.verticalPanelDefaultWidth
+            maximumWidth: floating ? root.panelMaxDimension : root.verticalPanelDefaultWidth
 
             minimumHeight: root.panelMinDimension
             maximumHeight: root.panelMaxDimension
@@ -333,6 +382,10 @@ DockPage {
 
         DockPanel {
             id: selectionFilterPanel
+            fitFloatingContent: true
+
+            defaultFloating: true
+            floatable: true
 
             objectName: root.pageModel.selectionFiltersPanelName()
             title: qsTrc("appshell", "Selection filter")
@@ -340,11 +393,11 @@ DockPage {
             navigationSection: root.navigationPanelSec(selectionFilterPanel.location)
 
             width: root.verticalPanelDefaultWidth
-            minimumWidth: root.verticalPanelDefaultWidth
-            maximumWidth: root.verticalPanelDefaultWidth
+            minimumWidth: floating ? root.panelMinDimension : root.verticalPanelDefaultWidth
+            maximumWidth: floating ? Math.max(root.panelMaxDimension, naturalContentSize.width) : root.verticalPanelDefaultWidth
 
             minimumHeight: root.panelMinDimension
-            maximumHeight: root.panelMaxDimension
+            maximumHeight: Math.max(root.panelMaxDimension, naturalContentSize.height)
 
             groupName: root.verticalPanelsGroup
 
@@ -361,6 +414,10 @@ DockPage {
 
         DockPanel {
             id: undoHistoryPanel
+            fitFloatingContent: true
+
+            defaultFloating: true
+            floatable: true
 
             objectName: root.pageModel.undoHistoryPanelName()
             title: qsTrc("notation", "History")
@@ -368,11 +425,11 @@ DockPage {
             navigationSection: root.navigationPanelSec(undoHistoryPanel.location)
 
             width: root.verticalPanelDefaultWidth
-            minimumWidth: root.verticalPanelDefaultWidth
-            maximumWidth: root.verticalPanelDefaultWidth
+            minimumWidth: floating ? root.panelMinDimension : root.verticalPanelDefaultWidth
+            maximumWidth: floating ? Math.max(root.panelMaxDimension, naturalContentSize.width) : root.verticalPanelDefaultWidth
 
             minimumHeight: root.panelMinDimension
-            maximumHeight: root.panelMaxDimension
+            maximumHeight: Math.max(root.panelMaxDimension, naturalContentSize.height)
 
             groupName: root.verticalPanelsGroup
             location: Location.Right
@@ -395,12 +452,15 @@ DockPage {
         DockPanel {
             id: mixerPanel
 
+            defaultFloating: true
+            floatable: true
+
             objectName: root.pageModel.mixerPanelName()
             title: qsTrc("appshell", "Mixer")
 
             height: 368
             minimumHeight: root.horizontalPanelMinHeight
-            maximumHeight: root.horizontalPanelMaxHeight
+            maximumHeight: floating ? root.panelMaxDimension : root.horizontalPanelMaxHeight
 
             minimumWidth: root.panelMinDimension
             maximumWidth: root.panelMaxDimension
@@ -433,13 +493,13 @@ DockPage {
                 }
 
                 onResizeRequested: function(newWidth, newHeight) {
-                    mixerPanel.resize(newWidth, newHeight)
+                    mixerPanel.resize(mixerPanel.floating ? newWidth : mixerPanel.width, newHeight)
                 }
 
                 Connections {
                     target: mixerPanel
                     function onPanelShown() {
-                        mixerPanelComponent.resizePanelToContentHeight()
+                        Qt.callLater(mixerPanelComponent.resizePanelToContent)
                     }
                 }
             }
@@ -458,39 +518,99 @@ DockPage {
             minimumWidth: root.panelMinDimension
             maximumWidth: root.panelMaxDimension
 
-            groupName: root.horizontalPanelsGroup
+            groupName: "pianoKeyboard"
 
-            //! NOTE: hidden by default
             visible: false
 
-            location: Location.Bottom
+            location: Location.Top
 
             dropDestinations: root.horizontalPanelDropDestinations
 
             navigationSection: root.navigationPanelSec(pianoKeyboardPanel.location)
 
             PianoKeyboardPanel {
+                id: pianoKeyboardContent
+
                 navigationSection: pianoKeyboardPanel.navigationSection
                 contentNavigationPanelOrderStart: pianoKeyboardPanel.contentNavigationPanelOrderStart
 
                 Component.onCompleted: {
                     pianoKeyboardPanel.contextMenuModel = contextMenuModel
                 }
+
+                function fitPanel() {
+                    if (fittedHeight > 0) {
+                        pianoKeyboardPanel.resize(pianoKeyboardPanel.width, fittedHeight)
+                    }
+                }
+
+                onFittedHeightChanged: fitPanel()
+
+                Connections {
+                    target: pianoKeyboardPanel
+                    function onPanelShown() {
+                        pianoKeyboardContent.fitPanel()
+                    }
+                }
             }
         },
 
         DockPanel {
+            id: navigatorPanel
+            defaultFloating: true
+            fitFloatingContent: true
+            floatable: true
+            objectName: root.pageModel.navigatorPanelName()
+            title: qsTrc('appshell', 'Navigator')
+            width: root.verticalPanelDefaultWidth
+            height: root.horizontalPanelMinHeight
+            visible: false
+            minimumWidth: root.panelMinDimension
+            minimumHeight: root.panelMinDimension
+            maximumWidth: Math.max(root.panelMaxDimension, naturalContentSize.width)
+            maximumHeight: Math.max(root.panelMaxDimension, naturalContentSize.height)
+            location: Location.Bottom
+            navigationSection: root.navigationPanelSec(navigatorPanel.location)
+            Item {
+                implicitWidth: navigator.implicitWidth
+                implicitHeight: navigator.implicitHeight
+                clip: true
+                NotationNavigator {
+                    id: navigator
+                    anchors.fill: parent
+                    objectName: 'MainNotationViewNavigator'
+                    fitFullContent: true
+                    // root.notationView is the score's paint view itself, and may still be null when this panel loads
+                    readonly property rect sourceViewport: root.notationView ? root.notationView.viewport : Qt.rect(0, 0, 0, 0)
+                    onSourceViewportChanged: setCursorRect(sourceViewport)
+                    Component.onCompleted: {
+                        load()
+                        setCursorRect(sourceViewport)
+                    }
+                    onMoveNotationRequested: function(dx, dy) {
+                        if (root.notationView) {
+                            root.notationView.moveCanvas(dx, dy)
+                        }
+                    }
+                }
+            }
+        },
+        DockPanel {
             id: timelinePanel
+            fitFloatingContent: true
+
+            defaultFloating: true
+            floatable: true
 
             objectName: root.pageModel.timelinePanelName()
             title: qsTrc("appshell", "Timeline")
 
             height: 200
-            minimumHeight: root.horizontalPanelMinHeight
-            maximumHeight: root.horizontalPanelMaxHeight
+            minimumHeight: floating ? root.panelMinDimension : root.horizontalPanelMinHeight
+            maximumHeight: floating ? Math.max(root.panelMaxDimension, naturalContentSize.height) : root.horizontalPanelMaxHeight
 
             minimumWidth: root.panelMinDimension
-            maximumWidth: root.panelMaxDimension
+            maximumWidth: Math.max(root.panelMaxDimension, naturalContentSize.width)
 
             groupName: root.horizontalPanelsGroup
 
@@ -511,18 +631,24 @@ DockPage {
 
         DockPanel {
             id: drumsetPanel
+            fitFloatingContent: true
+
+            defaultFloating: true
 
             objectName: root.pageModel.drumsetPanelName()
             title: qsTrc("appshell", "Drumset tools")
 
+            minimumWidth: root.panelMinDimension
+            maximumWidth: Math.max(root.panelMaxDimension, naturalContentSize.width)
+
             height: 64
-            minimumHeight: 64
-            maximumHeight: 64
+            minimumHeight: floating ? root.panelMinDimension : 64
+            maximumHeight: floating ? Math.max(root.panelMaxDimension, naturalContentSize.height) : 64
 
             //! NOTE: hidden by default
             visible: false
 
-            floatable: false
+            floatable: true
             closable: false
 
             location: Location.Bottom
@@ -537,16 +663,20 @@ DockPage {
 
         DockPanel {
             id: percussionPanel
+            fitFloatingContent: true
+
+            defaultFloating: true
+            floatable: true
 
             objectName: root.pageModel.percussionPanelName()
             title: qsTrc("appshell", "Percussion")
 
             height: 200
-            minimumHeight: root.horizontalPanelMinHeight
-            maximumHeight: root.horizontalPanelMaxHeight
+            minimumHeight: floating ? root.panelMinDimension : root.horizontalPanelMinHeight
+            maximumHeight: floating ? Math.max(root.panelMaxDimension, naturalContentSize.height) : root.horizontalPanelMaxHeight
 
             minimumWidth: root.panelMinDimension
-            maximumWidth: root.panelMaxDimension
+            maximumWidth: Math.max(root.panelMaxDimension, naturalContentSize.width)
 
             groupName: root.horizontalPanelsGroup
 
@@ -574,13 +704,17 @@ DockPage {
                 }
 
                 onResizeRequested: function(newWidth, newHeight) {
-                    percussionPanel.resize(newWidth, newHeight)
+                    if (!percussionPanel.floating) {
+                        percussionPanel.resize(newWidth, newHeight)
+                    }
                 }
 
                 Connections {
                     target: percussionPanel
                     function onPanelShown() {
-                        percussionComponent.resizePanelToContentHeight()
+                        if (!percussionPanel.floating) {
+                            percussionComponent.resizePanelToContentHeight()
+                        }
                     }
                 }
             }
@@ -591,7 +725,7 @@ DockPage {
         id: notationView
         name: "MainNotationView"
 
-        isNavigatorVisible: root.pageModel.isNavigatorVisible
+        isNavigatorVisible: false
         isBraillePanelVisible: root.pageModel.isBraillePanelVisible
         isMainView: true
 
@@ -609,41 +743,12 @@ DockPage {
     statusBar: DockStatusBar {
         objectName: root.pageModel.statusBarName()
 
+        visible: false
+
         navigationSection: content.navigationSection
 
         NotationStatusBar {
             id: content
         }
     }
-
-    tours: [
-        {
-            "eventCode": "online_sounds_added",
-            "tour": {
-                "id": "online-sounds-first-use",
-                "steps": [
-                    {
-                        "title": qsTrc("playback", "This sound processes online"),
-                        "description": qsTrc("playback", "Audio is processed in the background while you work. To trigger processing yourself, turn off automatic processing in Preferences > Audio & MIDI > Online sounds."),
-                        "controlUri": "control://NotationStatusBar/NotationStatusBar/OnlineSoundsStatusView",
-                        "previewImageOrGifUrl": "qrc:/resources/OnlineSoundsPreview.gif",
-                        "videoExplanationUrl": "https://youtu.be/hQ4YqmHM3BE?utm_source=mss-app-yt-4.6-cantai&utm_medium=mss-app-yt-4.6-cantai&utm_campaign=mss-app-yt-4.6-cantai"
-                    }
-                ]
-            }
-        },
-        {
-            "eventCode": "online_sounds_manual_processing_allowed",
-            "tour": {
-                "id": "online-sounds-manual-process",
-                "steps": [
-                    {
-                        "title": qsTrc("playback", "Online sounds"),
-                        "description": qsTrc("playback", "Click to manually process online sounds."),
-                        "controlUri": "control://NotationStatusBar/NotationStatusBar/OnlineSoundsStatusView",
-                    }
-                ]
-            }
-        },
-    ]
 }

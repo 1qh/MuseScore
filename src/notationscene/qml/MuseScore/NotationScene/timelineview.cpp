@@ -26,6 +26,7 @@
 
 #include <QApplication>
 #include <QQuickWindow>
+#include <QScrollBar>
 #include <QSplitter>
 #include <QTimer>
 
@@ -44,6 +45,18 @@ public:
         setObjectName("TimelineAdapter");
 
         m_msTimeline = new Timeline(this, iocCtx);
+    }
+
+    QSizeF contentSize() const
+    {
+        const auto* labels = m_msTimeline->labelsColumn();
+        const auto* horizontal = m_msTimeline->horizontalScrollBar();
+        const auto* vertical = m_msTimeline->verticalScrollBar();
+        const int horizontalHeight = horizontal->isHidden() ? 0 : horizontal->sizeHint().height();
+        const int verticalWidth = vertical->isHidden() ? 0 : vertical->sizeHint().width();
+        return QSizeF(labels->maximumWidth() + m_msTimeline->sceneRect().width()
+                      + 2 * m_msTimeline->frameWidth() + verticalWidth,
+                      m_msTimeline->sceneRect().height() + 2 * m_msTimeline->frameWidth() + horizontalHeight);
     }
 
     void updateView()
@@ -116,6 +129,10 @@ TimelineView::TimelineView(QQuickItem* parent)
 void TimelineView::doDraw()
 {
     if (isVisible()) {
+        if (auto* timeline = dynamic_cast<TimelineAdapter*>(qWidget())) {
+            const QSizeF contentSize = timeline->contentSize();
+            setImplicitSize(contentSize.width(), contentSize.height());
+        }
         m_dpr =  window() ? window()->devicePixelRatio() : 1.0;
 
         m_image = QImage(width() * m_dpr, height() * m_dpr, QImage::Format_ARGB32_Premultiplied);

@@ -530,6 +530,9 @@ Ret Interactive::openUrl(const std::string& url) const
 
 Ret Interactive::openUrl(const QUrl& url) const
 {
+    if (!url.isLocalFile()) {
+        return make_ret(Ret::Code::NotSupported);
+    }
     return QDesktopServices::openUrl(url);
 }
 

@@ -65,6 +65,9 @@ void VideoExportConfiguration::setPianoPosition(std::optional<PianoPosition> pos
 
 std::string VideoExportConfiguration::resolution() const
 {
+    if (viewMode() == ViewMode::Practice) {
+        return "2160p";
+    }
     return m_resolution ? m_resolution.value() : DEFAULT_RESOLUTION;
 }
 
@@ -80,6 +83,9 @@ const std::vector<std::string>& VideoExportConfiguration::availableResolutions()
 
 int VideoExportConfiguration::fps() const
 {
+    if (viewMode() == ViewMode::Practice) {
+        return 30;
+    }
     return m_fps ? m_fps.value() : DEFAULT_FPS;
 }
 
@@ -100,6 +106,9 @@ void VideoExportConfiguration::setLeadingSec(std::optional<double> leadingSec)
 
 double VideoExportConfiguration::trailingSec() const
 {
+    if (viewMode() == ViewMode::Practice) {
+        return 2.0;
+    }
     return m_trailingSec ? m_trailingSec.value() : DEFAULT_TRAILING_SECONDS;
 }
 

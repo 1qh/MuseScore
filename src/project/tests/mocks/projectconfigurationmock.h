@@ -54,29 +54,14 @@ public:
     MOCK_METHOD(muse::io::path_t, defaultUserProjectsPath, (), (const, override));
     MOCK_METHOD(muse::io::path_t, defaultOpenProjectsPath, (), (const, override));
 
-    MOCK_METHOD(muse::io::path_t, defaultConvertFilePath, (), (const, override));
-    MOCK_METHOD(void, setLastOpenedConvertFilePath, (const muse::io::path_t&), (override));
 
-    MOCK_METHOD(bool, shouldAskSaveLocationType, (), (const, override));
-    MOCK_METHOD(void, setShouldAskSaveLocationType, (bool), (override));
 
-    MOCK_METHOD(bool, isCloudProject, (const muse::io::path_t& projectPath), (const, override));
-    MOCK_METHOD(bool, isLegacyCloudProject, (const muse::io::path_t& projectPath), (const, override));
-    MOCK_METHOD(muse::io::path_t, cloudProjectPath, (int scoreId), (const, override));
-    MOCK_METHOD(int, cloudScoreIdFromPath, (const muse::io::path_t& projectPath), (const, override));
 
-    MOCK_METHOD(muse::io::path_t, cloudProjectSavingPath, (int scoreId), (const, override));
 
     MOCK_METHOD(muse::io::path_t, defaultSavingFilePath, (INotationProjectPtr, const std::string&, const std::string&), (const, override));
 
-    MOCK_METHOD(SaveLocationType, lastUsedSaveLocationType, (), (const, override));
-    MOCK_METHOD(void, setLastUsedSaveLocationType, (SaveLocationType), (override));
 
-    MOCK_METHOD(bool, shouldWarnBeforePublish, (), (const, override));
-    MOCK_METHOD(void, setShouldWarnBeforePublish, (bool), (override));
 
-    MOCK_METHOD(bool, shouldWarnBeforeSavingPubliclyToCloud, (), (const, override));
-    MOCK_METHOD(void, setShouldWarnBeforeSavingPubliclyToCloud, (bool), (override));
 
     MOCK_METHOD(HomeScoresPageViewType, homeScoresPageViewType, (), (const, override));
     MOCK_METHOD(void, setHomeScoresPageViewType, (HomeScoresPageViewType), (override));
@@ -101,15 +86,8 @@ public:
     MOCK_METHOD(void, setAutoSaveInterval, (int), (override));
     MOCK_METHOD(muse::async::Channel<int>, autoSaveIntervalChanged, (), (const, override));
 
-    MOCK_METHOD(bool, alsoShareAudioCom, (), (const, override));
-    MOCK_METHOD(void, setAlsoShareAudioCom, (bool), (override));
-    MOCK_METHOD(muse::async::Channel<bool>, alsoShareAudioComChanged, (), (const, override));
 
-    MOCK_METHOD(bool, showAlsoShareAudioComDialog, (), (const, override));
-    MOCK_METHOD(void, setShowAlsoShareAudioComDialog, (bool), (override));
 
-    MOCK_METHOD(bool, hasAskedAlsoShareAudioCom, (), (const, override));
-    MOCK_METHOD(void, setHasAskedAlsoShareAudioCom, (bool), (override));
 
     MOCK_METHOD(muse::io::path_t, newProjectTemporaryPath, (), (const, override));
 
@@ -118,33 +96,13 @@ public:
     MOCK_METHOD(bool, shouldDestinationFolderBeOpenedOnExport, (), (const, override));
     MOCK_METHOD(void, setShouldDestinationFolderBeOpenedOnExport, (bool), (override));
 
-    MOCK_METHOD(QUrl, supportForumUrl, (), (const, override));
 
-    MOCK_METHOD(QUrl, dotComBugReportUrl, (), (const, override));
 
-    MOCK_METHOD(QUrl, scoreUploadingGuidelinesUrl, (), (const, override));
-    MOCK_METHOD(QUrl, termsOfUseUrl, (), (const, override));
 
-    MOCK_METHOD(bool, openDetailedProjectUploadedDialog, (), (const, override));
-    MOCK_METHOD(void, setOpenDetailedProjectUploadedDialog, (bool), (override));
 
-    MOCK_METHOD(bool, hasAskedAudioGenerationSettings, (), (const, override));
-    MOCK_METHOD(void, setHasAskedAudioGenerationSettings, (bool), (override));
-
-    MOCK_METHOD(GenerateAudioTimePeriodType, generateAudioTimePeriodType, (), (const, override));
-    MOCK_METHOD(void, setGenerateAudioTimePeriodType, (GenerateAudioTimePeriodType), (override));
-    MOCK_METHOD(muse::async::Channel<int>, generateAudioTimePeriodTypeChanged, (), (const, override));
-
-    MOCK_METHOD(int, numberOfSavesToGenerateAudio, (), (const, override));
-    MOCK_METHOD(void, setNumberOfSavesToGenerateAudio, (int), (override));
-    MOCK_METHOD(muse::async::Channel<int>, numberOfSavesToGenerateAudioChanged, (), (const, override));
-
-    MOCK_METHOD(muse::io::path_t, temporaryMp3FilePathTemplate, (), (const, override));
 
     MOCK_METHOD(muse::io::path_t, projectBackupPath, (const muse::io::path_t&), (const, override));
 
-    MOCK_METHOD(bool, showCloudIsNotAvailableWarning, (), (const, override));
-    MOCK_METHOD(void, setShowCloudIsNotAvailableWarning, (bool), (override));
 
     MOCK_METHOD(bool, disableVersionChecking, (), (const, override));
     MOCK_METHOD(void, setDisableVersionChecking, (bool), (override));
@@ -152,10 +110,7 @@ public:
     MOCK_METHOD(bool, createBackupBeforeSaving, (), (const, override));
     MOCK_METHOD(void, setCreateBackupBeforeSaving, (bool), (override));
 
-    MOCK_METHOD(bool, showConvertFileProcessingDialog, (), (const, override));
-    MOCK_METHOD(void, setShowConvertFileProcessingDialog, (bool), (override));
 
-    MOCK_METHOD(muse::io::path_t, watchedConvertsJsonPath, (), (const, override));
 };
 }
 

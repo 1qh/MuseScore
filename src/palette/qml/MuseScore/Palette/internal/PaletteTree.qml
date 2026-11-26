@@ -57,6 +57,18 @@ StyledListView {
     highlightRangeMode: itemDragged ? ListView.ApplyRange : ListView.NoHighlightRange
 
     cacheBuffer: 3000
+    contentWidth: Math.max(width, implicitWidth)
+    displayMarginBeginning: contentHeight
+    displayMarginEnd: contentHeight
+    implicitWidth: {
+        let result = 0
+        for (const child of contentItem.children) {
+            if (child.naturalWidth !== undefined) {
+                result = Math.max(result, child.naturalWidth)
+            }
+        }
+        return result
+    }
 
     NavigationPanel {
         id: keynavTree
@@ -416,10 +428,9 @@ StyledListView {
                 }
             }
 
-            Component.onCompleted: {
-                const w = paletteHeader.implicitWidth + leftPadding + rightPadding;
-                paletteTree.implicitWidth = Math.max(paletteTree.implicitWidth, w);
-            }
+            readonly property real naturalWidth: Math.max(paletteHeader.implicitWidth,
+                                                         cellSize.width + 2 * mainPaletteContainer.padding)
+                                                 + leftPadding + rightPadding
 
             Component.onDestruction: {
                 if (palettePopup.active && palettePopup.model === model) {
@@ -553,7 +564,7 @@ StyledListView {
                                             : model.expanded ? qsTrc("palette", "%1 expanded", "tree item not collapsed").arg(model.accessibleText)
                                                              : model.accessibleText
 
-            width: ListView.view.width
+            width: paletteTree.contentWidth
 
             Drag.active: paletteTree.paletteProvider.isPaletteDragEnabled && paletteHeaderDragArea.drag.active
             Drag.dragType: Drag.Automatic

@@ -102,34 +102,6 @@ muse::async::Channel<MixerSectionType, bool> PlaybackConfigurationStub::isMixerS
     return {};
 }
 
-bool PlaybackConfigurationStub::isAuxSendVisible(aux_channel_idx_t) const
-{
-    return false;
-}
-
-void PlaybackConfigurationStub::setAuxSendVisible(aux_channel_idx_t, bool)
-{
-}
-
-muse::async::Channel<aux_channel_idx_t, bool> PlaybackConfigurationStub::isAuxSendVisibleChanged() const
-{
-    return {};
-}
-
-bool PlaybackConfigurationStub::isAuxChannelVisible(aux_channel_idx_t) const
-{
-    return false;
-}
-
-void PlaybackConfigurationStub::setAuxChannelVisible(aux_channel_idx_t, bool) const
-{
-}
-
-muse::async::Channel<aux_channel_idx_t, bool> PlaybackConfigurationStub::isAuxChannelVisibleChanged() const
-{
-    return {};
-}
-
 gain_t PlaybackConfigurationStub::defaultAuxSendValue(aux_channel_idx_t, AudioSourceType, const muse::String&) const
 {
     return 0.f;
@@ -204,40 +176,16 @@ void PlaybackConfigurationStub::setNeedToShowResetSoundFlagsWhenChangePlaybackPr
 {
 }
 
-bool PlaybackConfigurationStub::shouldShowOnlineSoundsProcessingError() const
-{
-    return false;
-}
-
-void PlaybackConfigurationStub::setShouldShowOnlineSoundsProcessingError(bool)
-{
-}
-
-muse::async::Notification PlaybackConfigurationStub::shouldShowOnlineSoundsProcessingErrorChanged() const
-{
-    return {};
-}
-
-muse::String PlaybackConfigurationStub::onlineSoundsHandbookUrl() const
-{
-    return muse::String();
-}
-
-OnlineSoundsShowProgressBarMode PlaybackConfigurationStub::onlineSoundsShowProgressBarMode() const
-{
-    return OnlineSoundsShowProgressBarMode::Never;
-}
-
-void PlaybackConfigurationStub::setOnlineSoundsShowProgressBarMode(OnlineSoundsShowProgressBarMode)
-{
-}
-
-muse::async::Notification PlaybackConfigurationStub::onlineSoundsShowProgressBarModeChanged() const
-{
-    return {};
-}
-
 bool PlaybackConfigurationStub::shouldMeasureInputLag() const
 {
     return false;
+}
+
+AudioInputParams PlaybackConfigurationStub::rememberedTrackInputParams(const std::string&) const
+{
+    return {};
+}
+
+void PlaybackConfigurationStub::setRememberedTrackInputParams(const std::string&, const AudioInputParams&)
+{
 }

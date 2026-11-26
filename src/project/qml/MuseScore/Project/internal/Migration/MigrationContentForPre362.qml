@@ -42,7 +42,6 @@ ColumnLayout {
     signal isApplyLelandChangeRequested(bool applyLeland)
     signal isApplyEdwinChangeRequested(bool applyEdwin)
     signal isRemapPercussionChangeRequested(bool remapPercussion)
-    signal watchVideoRequested()
 
     property NavigationPanel navigationPanel: NavigationPanel {
         name: "MigrationContentPanel"
@@ -135,8 +134,7 @@ ColumnLayout {
 
         CheckBox {
             id: percussionOption
-            text: qsTrc("project/migration", "Our new notation and sound mapping for <a href=\"%1\">MDL percussion</a>")
-                  .arg("https://musescore.org/node/367337") // non-'/en' URL should redirect to translated version, if available
+            text: qsTrc("project/migration", "Our new notation and sound mapping for MDL percussion")
             checked: root.isRemapPercussion
 
             navigation.panel: root.navigationPanel
@@ -155,18 +153,6 @@ ColumnLayout {
         StyledTextLabel {
             id: affectedLabel
             text: qsTrc("project/migration", "Please note: score layouts will be affected by improvements to MuseScore Studio")
-        }
-
-        FlatButton {
-            id: videoButton
-            text: qsTrc("project/migration", "Watch video")
-
-            navigation.panel: root.navigationPanel
-            navigation.row: 4
-
-            onClicked: {
-                root.watchVideoRequested()
-            }
         }
     }
 }

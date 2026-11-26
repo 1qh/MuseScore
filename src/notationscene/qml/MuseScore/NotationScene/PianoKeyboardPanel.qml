@@ -30,6 +30,9 @@ Item {
 
     property alias contextMenuModel: contextMenuModel
 
+    //! The height that shows the whole keyboard at the panel's width
+    readonly property alias fittedHeight: keyboardView.fittedHeight
+
     property alias navigationSection: navPanel.section
     property alias contentNavigationPanelOrderStart: navPanel.order
 

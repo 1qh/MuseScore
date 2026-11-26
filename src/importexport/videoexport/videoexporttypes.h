@@ -26,6 +26,7 @@ namespace mu::iex::videoexport {
 enum ViewMode {
     PageFull,
     Flexible,
+    Practice,
 };
 
 enum PianoPosition {

@@ -47,30 +47,6 @@ QString AboutModel::museScoreRevision() const
     return QString::fromStdString(configuration()->museScoreRevision());
 }
 
-QVariantMap AboutModel::museScoreUrl() const
-{
-    QUrl museScoreUrl(QString::fromStdString(configuration()->museScoreUrl()));
-    return makeUrl(museScoreUrl, false);
-}
-
-QVariantMap AboutModel::museScoreForumUrl() const
-{
-    QUrl museScoreForumUrl(QString::fromStdString(configuration()->museScoreForumUrl()));
-    return makeUrl(museScoreForumUrl);
-}
-
-QVariantMap AboutModel::museScoreContributionUrl() const
-{
-    QUrl museScoreContributionUrl(QString::fromStdString(configuration()->museScoreContributionUrl()));
-    return makeUrl(museScoreContributionUrl);
-}
-
-QVariantMap AboutModel::museScorePrivacyPolicyUrl() const
-{
-    QUrl museScorePrivacyPolicyUrl(QString::fromStdString(updateConfiguration()->museScorePrivacyPolicyUrl()));
-    return makeUrl(museScorePrivacyPolicyUrl);
-}
-
 QVariantMap AboutModel::musicXMLLicenseUrl() const
 {
     QUrl musicXMLLicenseUrl(QString::fromStdString(configuration()->musicXMLLicenseUrl()));

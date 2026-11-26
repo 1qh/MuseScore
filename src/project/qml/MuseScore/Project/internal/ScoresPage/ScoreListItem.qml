@@ -41,40 +41,14 @@ ListItemBlank {
     property bool showRemoveFromRecentFiles: false
 
     signal revealInFileBrowserRequested(string scorePath)
-    signal viewOnlineRequested(int scoreId)
     signal removeFromRecentFilesRequested(string scorePath)
-    signal deleteScoreRequested(int scoreId, string scoreName)
-    signal retryRequested()
-    signal cancelUploadRequested(int uploadId)
-    signal cancelConversionRequested(int convertType, int convertId)
 
-    readonly property bool isProcessing: root.score.processingStatus !== undefined
 
-    function requestCancel() {
-        if (Boolean(root.score.uploadId)) {
-            root.cancelUploadRequested(root.score.uploadId)
-        } else {
-            root.cancelConversionRequested(root.score.convertType, root.score.convertId)
-        }
-    }
+
 
     implicitHeight: 64
 
-    navigation.accessible.name: {
-        const name = root.score.name ?? ""
-
-        if (root.isProcessing) {
-            if (root.score.processingStatus === ScoreProcessingPlaceholder.Failed) {
-                //: %1 is the name of the score whose conversion failed
-                return qsTrc("project/convert", "Processing failed: %1").arg(name)
-            }
-
-            //: %1 is the name of the score being converted
-            return qsTrc("project", "Processing %1").arg(name)
-        }
-
-        return name
-    }
+    navigation.accessible.name: root.score.name ?? ""
     navigation.onActiveChanged: {
         if (navigation.active) {
             root.scrollIntoView()
@@ -99,7 +73,7 @@ ListItemBlank {
                 Layout.preferredWidth: 30
                 Layout.preferredHeight: 40
 
-                sourceComponent: root.isProcessing ? processingComp : scoreThumbnailComp
+                sourceComponent: scoreThumbnailComp
 
                 layer.enabled: ui.isEffectsAllowed
                 layer.effect: RoundedCornersEffect {
@@ -117,18 +91,7 @@ ListItemBlank {
                 }
             }
 
-            Component {
-                id: processingComp
 
-                ScoreProcessingPlaceholder {
-                    status: root.score.processingStatus
-                    compact: true
-                    iconSize: 16
-
-                    onRetryRequested: root.retryRequested()
-                    onCancelRequested: root.requestCancel()
-                }
-            }
 
             StyledTextLabel {
                 Layout.fillWidth: true
@@ -138,114 +101,11 @@ ListItemBlank {
                 horizontalAlignment: Text.AlignLeft
             }
 
-            Loader {
-                active: root.isProcessing || (root.score.isCloud ?? false)
 
-                sourceComponent: root.isProcessing ? processingStatusComp : cloudStatusComp
-            }
 
-            Component {
-                id: processingStatusComp
 
-                RowLayout {
-                    spacing: 12
 
-                    StyledTextLabel {
-                        text: root.score.processingStatus === ScoreProcessingPlaceholder.Failed
-                              ? qsTrc("project/convert", "Processing failed")
-                              : qsTrc("global", "Processing…")
-                        font: ui.theme.bodyBoldFont
-                        horizontalAlignment: Text.AlignLeft
-                    }
 
-                    FlatButton {
-                        minWidth: 60
-
-                        text: root.score.processingStatus === ScoreProcessingPlaceholder.Failed
-                              ? qsTrc("global", "Retry")
-                              : qsTrc("global", "Cancel")
-
-                        navigation.panel: root.navigation.panel
-                        navigation.row: root.navigation.row
-                        navigation.column: 2
-                        navigation.onActiveChanged: {
-                            if (navigation.active) {
-                                root.scrollIntoView()
-                            }
-                        }
-
-                        onClicked: {
-                            if (root.score.processingStatus === ScoreProcessingPlaceholder.Failed) {
-                                root.retryRequested()
-                            } else {
-                                root.requestCancel()
-                            }
-                        }
-                    }
-                }
-            }
-
-            Component {
-                id: cloudStatusComp
-
-                RowLayout {
-                    visible: root.score.isCloud
-
-                    spacing: 24
-
-                    CloudScoreStatusWatcher {
-                        id: cloudScoreStatusWatcher
-                    }
-
-                    Component.onCompleted: {
-                        cloudScoreStatusWatcher.load(root.score.scoreId)
-                    }
-
-                    ProgressBar {
-                        Layout.preferredWidth: 118
-                        Layout.preferredHeight: 16
-
-                        visible: cloudScoreStatusWatcher.isProgress
-
-                        from: 0
-                        to: cloudScoreStatusWatcher.progressTotal
-                        value: cloudScoreStatusWatcher.progressCurrent
-
-                        navigation.panel: root.navigation.panel
-                        navigation.row: root.navigation.row
-                        navigation.column: 2
-                        navigation.onActiveChanged: {
-                            if (navigation.active) {
-                                root.scrollIntoView()
-                            }
-                        }
-                    }
-
-                    CloudScoreIndicatorButton {
-                        Layout.alignment: Qt.AlignTrailing | Qt.AlignVCenter
-
-                        isProgress: cloudScoreStatusWatcher.isProgress
-                        isDownloadedAndUpToDate: cloudScoreStatusWatcher.isDownloadedAndUpToDate
-
-                        navigation.panel: root.navigation.panel
-                        navigation.row: root.navigation.row
-                        navigation.column: 3
-                        navigation.onActiveChanged: {
-                            if (navigation.active) {
-                                root.scrollIntoView()
-                            }
-                        }
-
-                        onClicked: {
-                            if (isProgress) {
-                                cloudScoreStatusWatcher.cancel()
-                            } else {
-                                root.clicked(null)
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         Repeater {
@@ -279,7 +139,6 @@ ListItemBlank {
 
         isCreateNew: root.score.isCreateNew ?? false
         isNoResultsFound: root.score.isNoResultsFound ?? false
-        isCloud: root.score.isCloud ?? false
         showRemoveFromRecentFiles: root.showRemoveFromRecentFiles
 
         readonly property bool isHovered: root.mouseArea.containsMouse
@@ -288,17 +147,15 @@ ListItemBlank {
                                            || contextMenu.navigation.active
                                            || contextMenu.isMenuOpenedByButton
 
-        visible: !root.isProcessing && contextMenu.isHovered
+        visible: contextMenu.isHovered
 
         navigation.panel: root.navigation.panel
         navigation.row: root.navigation.row
         navigation.column: 100 * (root.columns.length + 1) + 1
 
         onOpenRequested: root.clicked(null)
-        onViewOnlineRequested: root.viewOnlineRequested(root.score.scoreId ?? 0)
         onRevealInFileBrowserRequested: root.revealInFileBrowserRequested(root.score.path ?? "")
         onRemoveFromRecentFilesRequested: root.removeFromRecentFilesRequested(root.score.path ?? "")
-        onDeleteScoreRequested: root.deleteScoreRequested(root.score.scoreId ?? 0, root.score.name ?? "")
 
         Connections {
             target: root.ListView.view

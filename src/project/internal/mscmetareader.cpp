@@ -93,34 +93,6 @@ RetVal<ProjectMeta> MscMetaReader::readMeta(const muse::io::path_t& filePath) co
     return meta;
 }
 
-muse::RetVal<CloudProjectInfo> MscMetaReader::readCloudProjectInfo(const muse::io::path_t& filePath) const
-{
-    TRACEFUNC;
-
-    MscReader msczReader;
-    Ret ret = prepareReader(filePath, msczReader);
-    if (!ret) {
-        return ret;
-    }
-
-    // Read score meta
-    io::Buffer scoreData(msczReader.readScoreFile());
-    if (!scoreData.open(io::IODevice::ReadOnly)) {
-        return RetVal<CloudProjectInfo>::make_ret(Ret::Code::InternalError);
-    }
-    XmlStreamReader xmlReader(&scoreData);
-
-    ProjectMeta meta;
-    doReadMeta(xmlReader, meta);
-
-    RetVal<CloudProjectInfo> info;
-    info.ret = make_ok();
-    info.val.sourceUrl = meta.source;
-    info.val.revisionId = meta.additionalTags[SOURCE_REVISION_ID_TAG].toInt();
-
-    return info;
-}
-
 Ret MscMetaReader::prepareReader(const muse::io::path_t& filePath, MscReader& reader) const
 {
     Ret ret = fileSystem()->exists(filePath);

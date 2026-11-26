@@ -95,10 +95,6 @@ StyledDialogView {
         return ret
     }
 
-    function watchVideo() {
-        Qt.openUrlExternally("https://youtu.be/U7dagae87eM")
-    }
-
     ColumnLayout {
         spacing: 0
         anchors.fill: parent
@@ -172,10 +168,6 @@ StyledDialogView {
             onIsRemapPercussionChangeRequested: function(remapPercussion) {
                 root.isRemapPercussion = remapPercussion
             }
-
-            onWatchVideoRequested: {
-                root.watchVideo()
-            }
         }
     }
 
@@ -204,10 +196,6 @@ StyledDialogView {
 
             onIsRemapPercussionChangeRequested: function(remapPercussion) {
                 root.isRemapPercussion = remapPercussion
-            }
-
-            onWatchVideoRequested: {
-                root.watchVideo()
             }
         }
     }

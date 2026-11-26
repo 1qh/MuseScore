@@ -101,15 +101,7 @@ void DiagnosticsModule::onInit(const IApplication::RunMode&)
     const muse::io::path_t dumpsDir = globalConf->userAppDataPath() + "/logs/dumps";
     fileSystem()->makePath(dumpsDir);
 
-    std::string serverUrl { MUSE_MODULE_DIAGNOSTICS_CRASHREPORT_URL };
-    if (!m_configuration->isDumpUploadAllowed()) {
-        serverUrl.clear();
-        LOGD() << "not allowed dump upload";
-    } else {
-        LOGD() << "crash server url: " << serverUrl;
-    }
-
-    bool ok = s_crashHandler.start(handlerPath, dumpsDir, serverUrl);
+    bool ok = s_crashHandler.start(handlerPath, dumpsDir);
     if (!ok) {
         LOGE() << "failed start crash handler";
     } else {

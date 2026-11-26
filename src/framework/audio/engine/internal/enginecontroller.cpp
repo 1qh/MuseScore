@@ -150,8 +150,6 @@ void EngineController::init(const OutputSpec& outputSpec, const AudioEngineConfi
     // Setup audio engine
     m_audioEngine->init(outputSpec, consts);
 
-    m_synthResolver->init(m_configuration->defaultAudioInputParams(), outputSpec);
-
     m_playback->init();
 
     m_transportEventsDispatcher->init();

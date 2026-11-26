@@ -52,6 +52,8 @@ public:
     void onMidiEventReceived(const muse::midi::Event& event) override;
     muse::async::Channel<std::vector<const Note*> > notesReceived() const override;
 
+    muse::async::Channel<muse::midi::Event> noteEventsReceived() const override;
+
     void onRealtimeAdvance() override;
 
 private:
@@ -90,6 +92,8 @@ private:
     INotationInteractionPtr m_notationInteraction;
     INotationUndoStackPtr m_undoStack;
     muse::async::Channel<std::vector<const Note*> > m_notesReceivedChannel;
+
+    muse::async::Channel<muse::midi::Event> m_noteEventsReceived;
 
     QTimer m_processTimer;
     std::vector<muse::midi::Event> m_eventsQueue;

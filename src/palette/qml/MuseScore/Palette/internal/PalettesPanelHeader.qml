@@ -44,6 +44,8 @@ Item {
     signal addCustomPaletteRequested(var paletteName)
 
     implicitHeight: childrenRect.height
+    implicitWidth: isSearchOpened ? searchField.implicitWidth : addPalettesButton.implicitWidth + addPalettesButton.anchors.rightMargin
+                   + startSearchButton.implicitWidth
 
     function startSearch() {
         isSearchOpened = true

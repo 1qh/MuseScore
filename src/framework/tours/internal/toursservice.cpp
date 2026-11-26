@@ -34,6 +34,9 @@ void ToursService::registerTour(const String& eventCode, const Tour& tour)
 
 void ToursService::onEvent(const String& eventCode)
 {
+    if (!eventCode.isEmpty()) {
+        return;
+    }
     if (!muse::contains(m_eventsMap, eventCode)) {
         return;
     }

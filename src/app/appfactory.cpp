@@ -26,11 +26,6 @@
 #include "framework/audioplugins/audiopluginsmodule.h"
 #endif
 
-#ifdef MUSE_MODULE_CLOUD
-#include "framework/cloud/cloudmodule.h"
-#else
-#include "framework/stubs/cloud/cloudstubmodule.h"
-#endif
 
 #include "framework/draw/drawmodule.h"
 
@@ -354,7 +349,6 @@ std::shared_ptr<muse::IApplication> AppFactory::newGuiApp(const CmdOptions& opti
 
     app->addModule(new mu::braille::BrailleModule());
 
-    app->addModule(new muse::cloud::CloudModule());
     app->addModule(new mu::context::ContextModule());
 
 #ifdef MUE_BUILD_CONVERTER_MODULE

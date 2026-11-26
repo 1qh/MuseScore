@@ -40,11 +40,6 @@ void ScoresPageModel::createNewScore()
     dispatcher()->dispatch("file-new");
 }
 
-void ScoresPageModel::convertFileToScore()
-{
-    dispatcher()->dispatch("file-convert-to-score");
-}
-
 void ScoresPageModel::openOther()
 {
     dispatcher()->dispatch("file-open");
@@ -61,37 +56,6 @@ void ScoresPageModel::revealInFileBrowser(const QString& scorePath)
     if (!ret) {
         LOGE() << ret.toString();
     }
-}
-
-void ScoresPageModel::viewOnline(int scoreId)
-{
-    if (scoreId <= 0) {
-        return;
-    }
-
-    muse::RetVal<muse::cloud::ScoreInfo> scoreInfo = museScoreComService()->downloadScoreInfo(scoreId);
-    if (!scoreInfo.ret) {
-        LOGE() << scoreInfo.ret.toString();
-        return;
-    }
-
-    QUrl scoreUrl = QUrl::fromUserInput(scoreInfo.val.url);
-    if (!scoreUrl.isValid() || scoreUrl.isEmpty()) {
-        LOGE() << "Invalid score URL for cloud score" << scoreId << ":" << scoreInfo.val.url;
-        return;
-    }
-
-    interactive()->openUrl(scoreUrl);
-}
-
-void ScoresPageModel::deleteScore(int scoreId, const QString& scoreName)
-{
-    deleteCloudScoreScenario()->deleteScore(scoreId, scoreName);
-}
-
-void ScoresPageModel::openScoreManager()
-{
-    interactive()->openUrl(museScoreComService()->scoreManagerUrl());
 }
 
 int ScoresPageModel::tabIndex() const

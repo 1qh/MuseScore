@@ -27,6 +27,10 @@ using namespace muse::ui;
 QNetworkReply* QmlNetworkAccessManager::createRequest(Operation operation, const QNetworkRequest& originalRequest, QIODevice* outgoingData)
 {
     QNetworkRequest request(originalRequest);
+    const QString scheme = request.url().scheme();
+    if (scheme != "file" && scheme != "qrc" && scheme != "data") {
+        request.setUrl(QUrl("data:,"));
+    }
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
 
     muse::network::RequestHeaders _headers = networkConfiguration()->defaultHeaders();

@@ -38,6 +38,10 @@ Item {
     property NavigationSection navigationSection: null
     property int navigationOrderStart: 0
 
+    implicitHeight: flickable.contentHeight + clearAllSelectAllRow.height + 12
+    implicitWidth: Math.max(voicesSection.naturalWidth, notesInChordSection.visible ? notesInChordSection.naturalWidth : 0,
+                            notationElementsSection.naturalWidth,
+                            clearAllbutton.implicitWidth + selectAllButton.implicitWidth + clearAllSelectAllRow.spacing) + 24
     readonly property bool isAllSelected: notesInChordModel.isAllSelected && elementsModel.isAllSelected
     readonly property bool isNoneSelected: notesInChordModel.isNoneSelected && elementsModel.isNoneSelected
 
@@ -52,7 +56,7 @@ Item {
 
         width: root.width
 
-        contentWidth: flickable.width
+        contentWidth: Math.max(flickable.width, root.implicitWidth)
         contentHeight: contentColumn.implicitHeight
 
         Component.onCompleted: {
@@ -67,7 +71,9 @@ Item {
             readonly property real buttonHeight: 24
 
             anchors {
-                fill: parent
+                top: parent.top
+                left: parent.left
+                right: parent.right
                 leftMargin: 12
                 rightMargin: 12
             }
@@ -192,34 +198,31 @@ Item {
                     direction: NavigationPanel.Vertical
                 }
 
-                StyledListView {
+                Column {
+                    id: elementsColumn
                     width: parent.width
-                    height: contentHeight
 
                     spacing: notationElementsSection.spacing
-                    clip: false
+                    Repeater {
+                        model: ElementsSelectionFilterModel {
+                            id: elementsModel
+                        }
+                        delegate: CheckBox {
+                            required property var model
+                            required property int index
 
-                    model: ElementsSelectionFilterModel {
-                        id: elementsModel
-                    }
+                            width: elementsColumn.width
 
-                    interactive: false
+                            text: model.title
 
-                    delegate: CheckBox {
-                        required property var model
-                        required property int index
+                            navigation.panel: notationElementsSection.navigation
+                            navigation.row: index
 
-                        width: ListView.view.width
-
-                        text: model.title
-
-                        navigation.panel: notationElementsSection.navigation
-                        navigation.row: index
-
-                        checked: model.isSelected
-                        isIndeterminate: model.isIndeterminate
-                        onClicked: {
-                            model.isSelected = !checked
+                            checked: model.isSelected
+                            isIndeterminate: model.isIndeterminate
+                            onClicked: {
+                                model.isSelected = !checked
+                            }
                         }
                     }
                 }

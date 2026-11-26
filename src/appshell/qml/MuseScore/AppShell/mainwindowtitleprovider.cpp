@@ -109,7 +109,7 @@ void MainWindowTitleProvider::update()
     notation::INotationPtr notation = context()->currentNotation();
     setTitle(notation->projectNameAndPartName());
 
-    setFilePath((project->isNewlyCreated() || project->isCloudProject())
+    setFilePath(project->isNewlyCreated()
                 ? "" : project->path().toQString());
     setFileModified(project->needSave().val);
 }

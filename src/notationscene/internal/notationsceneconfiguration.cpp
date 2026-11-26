@@ -62,7 +62,7 @@ void NotationSceneConfiguration::init()
         m_isLimitCanvasScrollAreaChanged.notify();
     });
 
-    settings()->setDefaultValue(PIANO_KEYBOARD_NUMBER_OF_KEYS, Val(88));
+    settings()->setDefaultValue(PIANO_KEYBOARD_NUMBER_OF_KEYS, Val(DEFAULT_PIANO_KEYBOARD_NUMBER_OF_KEYS));
     m_pianoKeyboardNumberOfKeys.val = settings()->value(PIANO_KEYBOARD_NUMBER_OF_KEYS).toInt();
     settings()->valueChanged(PIANO_KEYBOARD_NUMBER_OF_KEYS).onReceive(this, [this](const Val& val) {
         m_pianoKeyboardNumberOfKeys.set(val.toInt());

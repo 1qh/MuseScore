@@ -32,6 +32,9 @@
 #include "media/ivideoencoderresolver.h"
 #include "../ivideoexportconfiguration.h"
 #include "context/iglobalcontext.h"
+#include "notation/inotationconfiguration.h"
+#include "playback/iplaybackcontroller.h"
+#include "ui/iuiconfiguration.h"
 
 #include "project/inotationwriter.h"
 #include "project/inotationwritersregister.h"
@@ -46,11 +49,14 @@ namespace mu::iex::videoexport {
 class VideoWriter : public project::INotationWriter, public muse::Contextable, public muse::async::Asyncable
 {
     muse::GlobalInject<IVideoExportConfiguration> configuration;
+    muse::GlobalInject<notation::INotationConfiguration> notationConfiguration;
+    muse::GlobalInject<muse::ui::IUiConfiguration> uiConfiguration;
     muse::GlobalInject<muse::io::IFileSystem> fileSystem;
     muse::ContextInject<muse::IApplication> application = { this };
     muse::ContextInject<muse::media::IVideoEncoderResolver> videoEncodeResolver = { this };
     muse::ContextInject<project::INotationWritersRegister> writers = { this };
     muse::ContextInject<context::IGlobalContext> globalContext = { this };
+    muse::ContextInject<playback::IPlaybackController> playbackController = { this };
 
 public:
     explicit VideoWriter(const muse::modularity::ContextPtr& iocCtx)
@@ -81,6 +87,9 @@ private:
     };
 
     Config makeConfig() const;
+    muse::Ret writePractice(notation::INotationPtr notation, muse::io::IODevice& device, Config config);
+    muse::Ret generatePracticeFrames(muse::media::IVideoEncoderPtr encoder, notation::INotationPtr notation,
+                                     const Config& config, double countInSec);
 
     void startVideoExport(muse::media::IVideoEncoderPtr encoder, notation::INotationPtr notation, const Config& cfg);
     void startAudioExport(notation::INotationPtr notation, const muse::io::path_t& audioPath, const Config& cfg);
@@ -113,6 +122,7 @@ private:
 
     muse::Progress m_progress;
     bool m_abort = false;
+    bool m_isPracticeExport = false;
     bool m_isCompleted = false;
     muse::Ret m_writeRet;
 

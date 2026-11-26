@@ -54,29 +54,14 @@ public:
     muse::io::path_t defaultUserProjectsPath() const override;
     muse::io::path_t defaultOpenProjectsPath() const override;
 
-    muse::io::path_t defaultConvertFilePath() const override;
-    void setLastOpenedConvertFilePath(const muse::io::path_t& path) override;
 
-    bool shouldAskSaveLocationType() const override;
-    void setShouldAskSaveLocationType(bool shouldAsk) override;
 
-    bool isCloudProject(const muse::io::path_t& projectPath) const override;
-    bool isLegacyCloudProject(const muse::io::path_t& projectPath) const override;
-    muse::io::path_t cloudProjectPath(int scoreId) const override;
-    int cloudScoreIdFromPath(const muse::io::path_t& projectPath) const override;
 
-    muse::io::path_t cloudProjectSavingPath(int scoreId = 0) const override;
     muse::io::path_t defaultSavingFilePath(INotationProjectPtr project, const std::string& filenameAddition = "",
                                            const std::string& suffix = "") const override;
 
-    SaveLocationType lastUsedSaveLocationType() const override;
-    void setLastUsedSaveLocationType(SaveLocationType type) override;
 
-    bool shouldWarnBeforePublish() const override;
-    void setShouldWarnBeforePublish(bool shouldWarn) override;
 
-    bool shouldWarnBeforeSavingPubliclyToCloud() const override;
-    void setShouldWarnBeforeSavingPubliclyToCloud(bool shouldWarn) override;
 
     int homeScoresPageTabIndex() const override;
     void setHomeScoresPageTabIndex(int index) override;
@@ -101,15 +86,8 @@ public:
     void setAutoSaveInterval(int minutes) override;
     muse::async::Channel<int> autoSaveIntervalChanged() const override;
 
-    bool alsoShareAudioCom() const override;
-    void setAlsoShareAudioCom(bool share) override;
-    muse::async::Channel<bool> alsoShareAudioComChanged() const override;
 
-    bool showAlsoShareAudioComDialog() const override;
-    void setShowAlsoShareAudioComDialog(bool show) override;
 
-    bool hasAskedAlsoShareAudioCom() const override;
-    void setHasAskedAlsoShareAudioCom(bool has) override;
 
     muse::io::path_t newProjectTemporaryPath() const override;
 
@@ -118,33 +96,13 @@ public:
     bool shouldDestinationFolderBeOpenedOnExport() const override;
     void setShouldDestinationFolderBeOpenedOnExport(bool shouldDestinationFolderBeOpenedOnExport) override;
 
-    QUrl supportForumUrl() const override;
 
-    QUrl dotComBugReportUrl() const override;
 
-    QUrl scoreUploadingGuidelinesUrl() const override;
-    QUrl termsOfUseUrl() const override;
 
-    bool openDetailedProjectUploadedDialog() const override;
-    void setOpenDetailedProjectUploadedDialog(bool show) override;
 
-    bool hasAskedAudioGenerationSettings() const override;
-    void setHasAskedAudioGenerationSettings(bool has) override;
-
-    GenerateAudioTimePeriodType generateAudioTimePeriodType() const override;
-    void setGenerateAudioTimePeriodType(GenerateAudioTimePeriodType type) override;
-    muse::async::Channel<int> generateAudioTimePeriodTypeChanged() const override;
-
-    int numberOfSavesToGenerateAudio() const override;
-    void setNumberOfSavesToGenerateAudio(int number) override;
-    muse::async::Channel<int> numberOfSavesToGenerateAudioChanged() const override;
-
-    muse::io::path_t temporaryMp3FilePathTemplate() const override;
 
     muse::io::path_t projectBackupPath(const muse::io::path_t& projectPath) const override;
 
-    bool showCloudIsNotAvailableWarning() const override;
-    void setShowCloudIsNotAvailableWarning(bool show) override;
 
     bool disableVersionChecking() const override;
     void setDisableVersionChecking(bool disable) override;
@@ -152,9 +110,6 @@ public:
     bool createBackupBeforeSaving() const override;
     void setCreateBackupBeforeSaving(bool create) override;
 
-    bool showConvertFileProcessingDialog() const override;
-    void setShowConvertFileProcessingDialog(bool show) override;
 
-    muse::io::path_t watchedConvertsJsonPath() const override;
 };
 }

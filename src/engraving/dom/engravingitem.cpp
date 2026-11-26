@@ -676,7 +676,7 @@ Color EngravingItem::curColor(bool isVisible, Color normalColor, const rendering
         marked = toNote(this)->mark();
     }
 
-    if (selected() || marked) {
+    if (opt.showSelection && (selected() || marked)) {
         voice_idx_t voiceForColorChoice = track() == muse::nidx ? 0 : voice();
         if (hasVoiceAssignmentProperties()) {
             VoiceAssignment voiceAssignment = getProperty(Pid::VOICE_ASSIGNMENT).value<VoiceAssignment>();

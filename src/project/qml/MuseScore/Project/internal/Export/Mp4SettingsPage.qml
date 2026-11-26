@@ -53,23 +53,6 @@ ExportSettingsPage {
                 wrapMode: Text.WordWrap
             }
 
-            FlatButton {
-                id: downloadButton
-
-                text: qsTrc("project/export", "Download FFmpeg")
-                icon: IconCode.OPEN_LINK
-                isNarrow: true
-                orientation: Qt.Horizontal
-
-                navigation.name: "ExportDownloadFFmpeg"
-                navigation.panel: root.navigationPanel
-                navigation.row: root.navigationOrder
-
-                onClicked: {
-                    api.launcher.openUrl("https://handbook.musescore.org/video/installing-ffmpeg")
-                }
-            }
-
             FilePicker {
                 width: parent.width
 
@@ -84,7 +67,7 @@ ExportSettingsPage {
                 path: root.model ? root.model.ffmpegDir : ""
 
                 navigation: root.navigationPanel
-                navigationRowOrderStart: downloadButton.navigation.order + 1
+                navigationRowOrderStart: root.navigationOrder
 
                 onPathEdited: function(newPath) {
                     if (root.model) {
@@ -117,6 +100,7 @@ ExportSettingsPage {
 
                 StyledDropdown {
                     id: videoResolutionDropdown
+                    enabled: root.model && !root.model.isPracticeVideo
                     Layout.preferredWidth: 126
 
                     navigation.name: "VideoResolutionDropdown"

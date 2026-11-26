@@ -129,6 +129,8 @@ else()
         internal/synthesizers/synthresolver.h
         internal/synthesizers/abstractsynthesizer.cpp
         internal/synthesizers/abstractsynthesizer.h
+        internal/synthesizers/silentsynth.cpp
+        internal/synthesizers/silentsynth.h
         internal/synthesizers/soundfontrepository.cpp
         internal/synthesizers/soundfontrepository.h
         internal/synthesizers/fluidsynth/soundmapping.h

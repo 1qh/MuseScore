@@ -32,8 +32,6 @@ class IDiagnosticsConfiguration : MODULE_GLOBAL_INTERFACE
     INTERFACE_ID(IDiagnosticsConfiguration)
 
 public:
-    virtual bool isDumpUploadAllowed() const = 0;
-    virtual void setIsDumpUploadAllowed(bool val) = 0;
 
     virtual bool shouldWarnBeforeSavingDiagnosticFiles() const = 0;
     virtual void setShouldWarnBeforeSavingDiagnosticFiles(bool val) = 0;

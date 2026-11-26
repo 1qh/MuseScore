@@ -279,6 +279,10 @@ bool DockPanelView::isTabAllowed(const DockPanelView* tab) const
         return false;
     }
 
+    if (tab->defaultFloating() && !tab->isOpen()) {
+        return false;
+    }
+
     if (!isOpen()) {
         return false;
     }

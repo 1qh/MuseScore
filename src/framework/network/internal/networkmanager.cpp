@@ -125,6 +125,10 @@ RetVal<Progress> NetworkManager::execRequest(RequestType requestType, const QUrl
                                              OutgoingDeviceVar outgoingData,
                                              const RequestHeaders& headers)
 {
+    if (!url.isLocalFile()) {
+        return RetVal<Progress>::make_ret((int)Err::NetworkError);
+    }
+
     if (std::holds_alternative<QIODevicePtr>(outgoingData)) {
         if (!openDevice(std::get<QIODevicePtr>(outgoingData), QIODevice::ReadOnly)) {
             return RetVal<Progress>::make_ret((int)Err::FiledOpenIODeviceRead);

@@ -52,7 +52,7 @@ Item {
 
         anchors.left: parent.left
 
-        width: contentWidth
+        width: count * 30 + Math.max(0, count - 1) * spacing
         height: contentHeight
 
         contentHeight: root.height

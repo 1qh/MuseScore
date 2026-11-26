@@ -118,6 +118,9 @@ void DrumsetPanelView::initDrumsetPalette()
 {
     auto updateView = [this]() {
         m_adapter->updateDrumset();
+        const PaletteWidget* palette = m_adapter->drumsetPalette()->paletteWidget();
+        const int contentWidth = qMax(1, palette->actualCellCount()) * palette->gridWidthScaled();
+        setImplicitSize(contentWidth + 6, palette->heightForWidth(contentWidth) + 6);
         update();
     };
 

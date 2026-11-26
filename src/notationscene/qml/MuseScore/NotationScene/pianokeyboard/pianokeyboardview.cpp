@@ -22,8 +22,10 @@
 #include "pianokeyboardview.h"
 
 #include <QPainter>
+#include <QtMath>
 
 #include "pianokeyboardcontroller.h"
+#include "notationscene/inotationsceneconfiguration.h"
 
 #include "log.h"
 
@@ -115,6 +117,16 @@ void PianoKeyboardView::calculateKeyRects()
     constexpr qreal defaultSpacing = 2.0;
     constexpr qreal maxSpacing = 2.0;
 
+    //! NOTE: MuseScoreLite fits the whole keyboard to the view's width, and reports the height that shows it whole
+    piano_key_t lastKey = std::min<piano_key_t>(m_lowestKey + m_numberOfKeys, MAX_NUM_KEYS);
+    int whiteKeys = 0;
+    for (piano_key_t key = m_lowestKey; key < lastKey; ++key) {
+        whiteKeys += isBlackKey(key) ? 0 : 1;
+    }
+    if (whiteKeys > 0 && width() > 0) {
+        m_keyWidthScaling = std::max(0.1, (width() - maxSpacing * (whiteKeys + 1)) / (whiteKeys * 30.0));
+    }
+
     m_spacing = std::min(defaultSpacing * m_keyWidthScaling, maxSpacing);
 
     constexpr qreal defaultWhiteKeyWidth = 30.0;
@@ -149,6 +161,12 @@ void PianoKeyboardView::calculateKeyRects()
     }
 
     m_keysAreaRect.setSize(QSizeF(hPos + m_spacing / 2, m_whiteKeyHeight));
+
+    qreal fitted = defaultWhiteKeyHeight * m_keyWidthScaling + m_spacing * 2;
+    if (!qFuzzyCompare(fitted, m_fittedHeight)) {
+        m_fittedHeight = fitted;
+        emit fittedHeightChanged();
+    }
     adjustKeysAreaPosition();
 }
 
@@ -187,19 +205,16 @@ void PianoKeyboardView::updateKeyStateColors()
     m_whiteKeyStateColors[KeyState::None] = Qt::white;
     m_whiteKeyStateColors[KeyState::OtherInSelectedChord] = mixedColors(Qt::white, accentColor, 0.25);
     m_whiteKeyStateColors[KeyState::Selected] = mixedColors(Qt::white, accentColor, isKeysFromMidiInput ? 0.8 : 0.5);
-    m_whiteKeyStateColors[KeyState::Played] = mixedColors(Qt::white, accentColor, 0.8);
 
     QColor blackKeyTopPieceBaseColor(78, 78, 78);
     m_blackKeyTopPieceStateColors[KeyState::None] = blackKeyTopPieceBaseColor;
     m_blackKeyTopPieceStateColors[KeyState::OtherInSelectedChord] = mixedColors(blackKeyTopPieceBaseColor, accentColor, 0.4);
     m_blackKeyTopPieceStateColors[KeyState::Selected] = mixedColors(blackKeyTopPieceBaseColor, accentColor, 0.8);
-    m_blackKeyTopPieceStateColors[KeyState::Played] = mixedColors(blackKeyTopPieceBaseColor, accentColor, 1.0);
 
     QColor blackKeyBottomPieceBaseColor(56, 56, 58);
     m_blackKeyBottomPieceStateColors[KeyState::None] = blackKeyBottomPieceBaseColor;
     m_blackKeyBottomPieceStateColors[KeyState::OtherInSelectedChord] = mixedColors(blackKeyBottomPieceBaseColor, accentColor, 0.4);
     m_blackKeyBottomPieceStateColors[KeyState::Selected] = mixedColors(blackKeyBottomPieceBaseColor, accentColor, 0.8);
-    m_blackKeyBottomPieceStateColors[KeyState::Played] = mixedColors(blackKeyBottomPieceBaseColor, accentColor, 1.0);
 }
 
 void PianoKeyboardView::paint(QPainter* painter)
@@ -220,6 +235,19 @@ void PianoKeyboardView::paint(QPainter* painter)
     QRectF viewport = QRectF(0.0, 0.0, width(), height()).translated(-pos);
     paintWhiteKeys(painter, viewport);
     paintBlackKeys(painter, viewport);
+}
+
+void PianoKeyboardView::paintPlayback(QPainter* painter, const INotationPlaybackPtr& playback,
+                                      const engraving::InstrumentTrackIdSet& tracks,
+                                      std::optional<muse::audio::secs_t> position)
+{
+    if (!m_isInitialized || !playback) {
+        return;
+    }
+    m_controller->setExportPlaybackPosition(playback, tracks, position);
+    painter->save();
+    paint(painter);
+    painter->restore();
 }
 
 void PianoKeyboardView::paintBackground(QPainter* painter)
@@ -255,7 +283,12 @@ void PianoKeyboardView::paintWhiteKeys(QPainter* painter, const QRectF& viewport
 
         painter->translate(rect.topLeft());
 
+        const size_t layer = m_controller->keyPlaybackLayer(key);
         QColor fillColor = m_whiteKeyStateColors[m_controller->keyState(key)];
+        if (layer) {
+            const QColor layerColor = QColor::fromRgb(PIANO_KEY_LAYER_COLORS[pianoKeyLayerColorIndex(layer)]);
+            fillColor = mixedColors(Qt::white, layerColor, 0.8);
+        }
 
         painter->fillPath(path, fillColor);
 
@@ -351,8 +384,13 @@ void PianoKeyboardView::paintBlackKeys(QPainter* painter, const QRectF& viewport
             bottomPieceGradient.setFinalStop(0.0, bottom);
         }
 
-        topPieceGradient.setColorAt(1.0, m_blackKeyTopPieceStateColors[m_controller->keyState(key)]);
-        bottomPieceGradient.setColorAt(0.0, m_blackKeyBottomPieceStateColors[m_controller->keyState(key)]);
+        const size_t layer = m_controller->keyPlaybackLayer(key);
+        const QColor layerColor = layer
+                                  ? QColor::fromRgb(PIANO_KEY_LAYER_COLORS[pianoKeyLayerColorIndex(layer)]) : QColor();
+        topPieceGradient.setColorAt(1.0, layer ? layerColor
+                                             : m_blackKeyTopPieceStateColors[m_controller->keyState(key)]);
+        bottomPieceGradient.setColorAt(0.0, layer ? layerColor
+                                                : m_blackKeyBottomPieceStateColors[m_controller->keyState(key)]);
 
         painter->translate(rect.topLeft());
         painter->fillRect(backgroundRect, backgroundColor);
@@ -360,6 +398,11 @@ void PianoKeyboardView::paintBlackKeys(QPainter* painter, const QRectF& viewport
         painter->fillPath(bottomPiecePath, bottomPieceGradient);
         painter->translate(-rect.topLeft());
     }
+}
+
+qreal PianoKeyboardView::fittedHeight() const
+{
+    return m_fittedHeight;
 }
 
 int PianoKeyboardView::numberOfKeys() const
@@ -382,9 +425,9 @@ void PianoKeyboardView::setNumberOfKeys(int number)
         m_lowestKey = 21;
         m_numberOfKeys = 88;
         break;
-    case 61:
+    case DEFAULT_PIANO_KEYBOARD_NUMBER_OF_KEYS:
         m_lowestKey = 36;
-        m_numberOfKeys = 61;
+        m_numberOfKeys = DEFAULT_PIANO_KEYBOARD_NUMBER_OF_KEYS;
         break;
     case 49:
         m_lowestKey = 36;

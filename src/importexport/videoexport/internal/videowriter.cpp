@@ -22,9 +22,17 @@
 #include "videowriter.h"
 
 #include <cmath>
+#include <map>
 
+#include <QCoreApplication>
 #include <QPainter>
 #include <QThread>
+#ifdef MUE_VIDEOEXPORT_PRACTICE
+#include <QQmlContext>
+#include <QQmlEngine>
+#include "notationscene/inotationsceneconfiguration.h"
+#include "notationscene/qml/MuseScore/NotationScene/pianokeyboard/pianokeyboardview.h"
+#endif
 
 #include "global/concurrency/concurrent.h"
 #include "io/buffer.h"
@@ -33,6 +41,7 @@
 #include "engraving/dom/page.h"
 #include "engraving/dom/repeatlist.h"
 #include "engraving/dom/masterscore.h"
+#include "engraving/dom/system.h"
 
 #include "notation/imasternotation.h"
 #include "notation/notationtypes.h"
@@ -43,6 +52,7 @@
 
 #include "defer.h"
 #include "log.h"
+#include "settings.h"
 
 using namespace mu::iex::videoexport;
 using namespace mu::project;
@@ -103,6 +113,9 @@ muse::Ret VideoWriter::write(INotationPtr notation, muse::io::IODevice& device, 
     bool withAudio = muse::value(options, OptionKey::WITH_AUDIO, muse::Val(true)).toBool();
 
     Config cfg = makeConfig();
+    if (cfg.viewMode == ViewMode::Practice) {
+        return writePractice(notation, device, cfg);
+    }
 
     muse::io::path_t finalPath(filePath);
     muse::io::path_t tempAudioPath = finalPath + ".tmp_audio.aac";
@@ -225,8 +238,256 @@ VideoWriter::Config VideoWriter::makeConfig() const
     cfg.trailingSec = configuration()->trailingSec();
 
     cfg.viewMode = configuration()->viewMode();
+    if (cfg.viewMode == ViewMode::Practice) {
+        cfg.width = 3840;
+        cfg.height = 2160;
+        cfg.fps = 30;
+        cfg.bitrate = 40000000;
+        cfg.leadingSec = 0;
+        cfg.trailingSec = 2;
+    }
 
     return cfg;
+}
+
+muse::Ret VideoWriter::writePractice(INotationPtr notation, muse::io::IODevice& device, Config config)
+{
+#ifndef MUE_VIDEOEXPORT_PRACTICE
+    (void)notation;
+    (void)device;
+    (void)config;
+    return muse::Ret(static_cast<int>(muse::Ret::Code::NotSupported), "Practice video requires the notation scene QML module");
+#else
+    if (QThread::currentThread() != QCoreApplication::instance()->thread()) {
+        return muse::Ret(static_cast<int>(muse::Ret::Code::NotSupported), "Practice video must run on the GUI thread");
+    }
+    if (!uiConfiguration() || !notationConfiguration() || !playbackController()) {
+        return make_ret(muse::Ret::Code::InternalError);
+    }
+    m_abort = false;
+    m_isCompleted = true;
+    m_audioCompleted = true;
+    m_isPracticeExport = true;
+    DEFER {
+        m_isPracticeExport = false;
+    };
+    muse::settings()->beginTransaction(false);
+    DEFER {
+        muse::settings()->rollbackTransaction(false);
+    };
+    uiConfiguration()->setCurrentTheme(muse::ui::HIGH_CONTRAST_BLACK_THEME_CODE);
+    notationConfiguration()->setScoreInversionEnabled(true);
+    notationConfiguration()->setOnlyInvertInDarkTheme(false);
+    notationConfiguration()->setIsMetronomeEnabled(true);
+    if (uiConfiguration()->currentTheme().codeKey != muse::ui::HIGH_CONTRAST_BLACK_THEME_CODE
+        || !notationConfiguration()->shouldInvertScore()) {
+        return make_ret(muse::Ret::Code::InternalError);
+    }
+    auto restoreData = prepareScore(notation, config);
+    if (!restoreData) {
+        return make_ret(muse::Ret::Code::BadData);
+    }
+    DEFER {
+        restoreScore(notation, *restoreData);
+    };
+    auto playback = notation->masterNotation()->playback();
+    double countInSec = playback->setExportCountIn(true);
+    if (countInSec <= 0) {
+        return muse::Ret(static_cast<int>(muse::Ret::Code::BadData), "Cannot generate practice count-in");
+    }
+    DEFER {
+        playback->setExportCountIn(false);
+    };
+    const muse::io::path_t outputPath(device.meta("file_path"));
+    const muse::io::path_t audioPath = outputPath + ".tmp_audio.aac";
+    DEFER {
+        if (m_audioWriter) {
+            m_audioWriter->progress()->finished().disconnect(this);
+            m_audioWriter = nullptr;
+        }
+        muse::io::File::remove(audioPath);
+    };
+    m_audioCompleted = false;
+    m_audioRet = muse::Ret();
+    startAudioExport(notation, audioPath, config);
+    while (!m_audioCompleted) {
+        application()->processEvents();
+        QThread::yieldCurrentThread();
+    }
+    playback->setExportCountIn(false);
+    if (m_abort) {
+        return make_ret(muse::Ret::Code::Cancel);
+    }
+    if (!m_audioRet) {
+        return m_audioRet;
+    }
+    auto encoder = videoEncodeResolver()->currentVideoEncoder();
+    if (!encoder) {
+        return make_ret(muse::Ret::Code::NotSupported);
+    }
+    muse::media::IVideoEncoder::Options encoderOptions;
+    encoderOptions.format = "mp4";
+    encoderOptions.width = config.width;
+    encoderOptions.height = config.height;
+    encoderOptions.fps = config.fps;
+    encoderOptions.gop = config.fps / 2;
+    encoderOptions.bitrate = config.bitrate;
+    encoderOptions.hevcVideoToolbox = true;
+    DEFER {
+        encoder->close();
+    };
+    if (!encoder->open(outputPath, encoderOptions)) {
+        return muse::Ret(static_cast<int>(muse::Ret::Code::NotSupported), "Cannot open hevc_videotoolbox for practice video");
+    }
+    m_progress.start();
+    muse::Ret result = generatePracticeFrames(encoder, notation, config, countInSec);
+    encoder->finishEncode();
+    device.close();
+    if (result && !encoder->addAudio(audioPath)) {
+        result = make_ret(muse::Ret::Code::UnknownError);
+    }
+    m_progress.finish(result);
+    return result;
+#endif
+}
+
+muse::Ret VideoWriter::generatePracticeFrames(muse::media::IVideoEncoderPtr encoder, INotationPtr notation,
+                                             const Config& config, double countInSec)
+{
+#ifndef MUE_VIDEOEXPORT_PRACTICE
+    (void)encoder;
+    (void)notation;
+    (void)config;
+    (void)countInSec;
+    return make_ret(muse::Ret::Code::NotSupported);
+#else
+    QQmlEngine engine;
+    muse::QmlIoCContext qmlContext(&engine);
+    qmlContext.ctx = iocContext();
+    engine.rootContext()->setContextProperty("ioc_context", QVariant::fromValue(&qmlContext));
+    PianoKeyboardView keyboard;
+    QQmlEngine::setContextForObject(&keyboard, engine.rootContext());
+    keyboard.setNumberOfKeys(DEFAULT_PIANO_KEYBOARD_NUMBER_OF_KEYS);
+    keyboard.setWidth(config.width);
+    keyboard.init();
+    keyboard.setHeight(std::ceil(keyboard.fittedHeight()));
+    auto score = notation->elements()->msScore();
+    auto playback = notation->masterNotation()->playback();
+    const auto& repeats = notation->masterNotation()->masterScore()->repeatList(notationConfiguration()->isPlayRepeatsEnabled());
+    struct SystemPosition {
+        tick_t playedTick;
+        const engraving::System* system;
+    };
+    std::vector<SystemPosition> positions;
+    std::map<const engraving::System*, muse::RectF> bounds;
+    for (const auto* repeat : repeats) {
+        for (const auto* measure : repeat->measureList()) {
+            const auto* displayedMeasure = score->tick2measureMM(measure->tick());
+            const auto* system = displayedMeasure ? displayedMeasure->system() : nullptr;
+            if (!system || !system->page()) {
+                continue;
+            }
+            if (positions.empty() || positions.back().system != system) {
+                positions.push_back({ static_cast<tick_t>(repeat->utick + measure->tick().ticks() - repeat->tick), system });
+            }
+            if (bounds.find(system) != bounds.end()) {
+                continue;
+            }
+            muse::RectF rect = system->canvasBoundingRect();
+            auto* page = system->page();
+            for (const auto* item : page->items(page->ldata()->bbox())) {
+                if (item->visible() && item->findAncestor(engraving::ElementType::SYSTEM) == system) {
+                    rect = rect.united(item->canvasBoundingRect());
+                }
+            }
+            double padding = score->style().spatium() * 4;
+            bounds.emplace(system, rect.adjusted(-padding, -padding, padding, padding));
+        }
+    }
+    if (positions.empty() || repeats.ticks() <= 0 || keyboard.height() >= config.height) {
+        return make_ret(muse::Ret::Code::BadData);
+    }
+    QImage frame(config.width, config.height, QImage::Format_RGB32);
+    if (frame.isNull()) {
+        return make_ret(muse::Ret::Code::InternalError);
+    }
+    frame.setDotsPerMeterX(std::lrint(engraving::DPI * 1000 / engraving::INCH));
+    frame.setDotsPerMeterY(std::lrint(engraving::DPI * 1000 / engraving::INCH));
+    QPainter qp(&frame);
+    if (!qp.isActive()) {
+        return make_ret(muse::Ret::Code::InternalError);
+    }
+    qp.setRenderHint(QPainter::Antialiasing);
+    qp.setRenderHint(QPainter::TextAntialiasing);
+    Painter painter(&qp, "practice_video");
+    PlaybackCursor cursor(iocContext());
+    cursor.setNotation(notation);
+    auto previousNotation = globalContext()->currentNotation();
+    playbackController()->setNotation(notation);
+    const auto audibleTracks = playbackController()->audibleInstrumentTrackIds();
+    DEFER {
+        playbackController()->setNotation(previousNotation);
+    };
+    const double duration = playback->totalPlayTime();
+    const int songFrames = static_cast<int>(std::ceil((countInSec + duration) * config.fps));
+    const int trailingFrames = static_cast<int>(config.trailingSec * config.fps);
+    const int totalFrames = songFrames + trailingFrames;
+    size_t position = 0;
+    const double slotHeight = (config.height - keyboard.height()) / 2;
+    for (int f = 0; f < totalFrames; ++f) {
+        if (m_abort) {
+            return make_ret(muse::Ret::Code::Cancel);
+        }
+        m_progress.progress(f, totalFrames);
+        if (f < songFrames) {
+            const double time = static_cast<double>(f) / config.fps - countInSec;
+            const bool countingIn = time < 0;
+            const tick_t playedTick = countingIn ? 0
+                                      : std::min(playback->secToPlayedTick(time), static_cast<tick_t>(repeats.ticks() - 1));
+            while (position + 1 < positions.size() && playedTick >= positions[position + 1].playedTick) {
+                ++position;
+            }
+            const auto* first = positions[position].system;
+            const auto* next = position + 1 < positions.size() ? positions[position + 1].system : nullptr;
+            const auto& firstRect = bounds.at(first);
+            const auto nextRect = next ? bounds.at(next) : firstRect;
+            const double scale = std::min((config.width - 96.0) / std::max(firstRect.width(), nextRect.width()),
+                                          (slotHeight - 96.0) / std::max(firstRect.height(), nextRect.height()));
+            if (!std::isfinite(scale) || scale <= 0) {
+                return make_ret(muse::Ret::Code::BadData);
+            }
+            qp.fillRect(frame.rect(), Qt::black);
+            keyboard.paintPlayback(&qp, playback, audibleTracks,
+                                   countingIn ? std::nullopt : std::optional<muse::audio::secs_t>(time));
+            cursor.setVisible(!countingIn);
+            cursor.move(repeats.utick2tick(playedTick));
+            const auto paintSystem = [&](const engraving::System* system, int slot) {
+                if (!system) {
+                    return;
+                }
+                const auto& rect = bounds.at(system);
+                painter.save();
+                painter.translate((config.width - rect.width() * scale) / 2,
+                                  keyboard.height() + slot * slotHeight + (slotHeight - rect.height() * scale) / 2);
+                painter.scale(scale, scale);
+                painter.translate(-rect.topLeft());
+                painter.setClipRect(rect);
+                notation->painting()->paintSystem(&painter, system);
+                if (slot == 0) {
+                    cursor.paint(&painter);
+                }
+                painter.restore();
+            };
+            paintSystem(first, 0);
+            paintSystem(next, 1);
+        }
+        if (!encoder->encodeImage(frame)) {
+            return make_ret(muse::Ret::Code::UnknownError);
+        }
+        application()->processEvents();
+    }
+    return muse::make_ok();
+#endif
 }
 
 void VideoWriter::startVideoExport(muse::media::IVideoEncoderPtr encoder, INotationPtr notation, const Config& cfg)
@@ -260,7 +521,11 @@ void VideoWriter::startAudioExport(INotationPtr notation, const muse::io::path_t
     audioDevice.setMeta("file_path", audioPath.toStdString());
     audioDevice.open(muse::io::IODevice::WriteOnly);
 
-    m_audioWriter->write(notation, audioDevice, audioOpts);
+    muse::Ret ret = m_audioWriter->write(notation, audioDevice, audioOpts);
+    if (cfg.viewMode == ViewMode::Practice && ret.valid() && !ret && !m_audioCompleted) {
+        m_audioRet = ret;
+        m_audioCompleted = true;
+    }
 }
 
 muse::Ret VideoWriter::writeList(const INotationPtrList&, muse::io::IODevice&, const Options&)
@@ -280,6 +545,10 @@ void VideoWriter::abort()
 
     if (m_audioWriter) {
         m_audioWriter->abort();
+    }
+    if (m_isPracticeExport) {
+        m_audioCompleted = true;
+        return;
     }
 
     // Wait abort completion
@@ -316,6 +585,11 @@ std::optional<VideoWriter::ScoreRestoreData> VideoWriter::prepareScore(INotation
         score->setShowInstrumentNames(false);
         score->setShowVBox(false);
     }
+    if (config.viewMode == ViewMode::Practice) {
+        score->setShowVBox(false);
+        score->style().set(engraving::Sid::showHeader, false);
+        score->style().set(engraving::Sid::showFooter, false);
+    }
 
     score->doLayout();
 
@@ -327,6 +601,9 @@ std::optional<VideoWriter::ScoreRestoreData> VideoWriter::prepareScore(INotation
     }
 
     const Page* page = pages.front();
+    if (config.viewMode == ViewMode::Practice) {
+        return result;
+    }
 
     if (config.viewMode == ViewMode::PageFull) {
         double scaleX = config.width / page->width();

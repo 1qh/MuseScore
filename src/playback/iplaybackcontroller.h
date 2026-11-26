@@ -61,14 +61,10 @@ public:
     virtual engraving::InstrumentTrackIdSet audibleInstrumentTrackIds() const = 0;
 
     using AuxTrackIdMap = std::map<muse::audio::aux_channel_idx_t, muse::audio::TrackId>;
-    virtual const AuxTrackIdMap& auxTrackIdMap() const = 0;
 
     virtual muse::async::Channel<muse::audio::TrackId> trackAdded() const = 0;
     virtual muse::async::Channel<muse::audio::TrackId> trackRemoved() const = 0;
     virtual muse::async::Channel<bool> playbackInitedChanged() const = 0;
-
-    virtual std::string auxChannelName(muse::audio::aux_channel_idx_t index) const = 0;
-    virtual muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> auxChannelNameChanged() const = 0;
 
     virtual muse::async::Promise<muse::audio::SoundPresetList> availableSoundPresets(const engraving::InstrumentTrackId& instrumentTrackId)
     const
@@ -119,8 +115,5 @@ public:
     virtual void setNotation(notation::INotationPtr notation) = 0;
     virtual void setIsExportingAudio(bool exporting) = 0;
 
-    virtual const std::map<muse::audio::TrackId, muse::audio::AudioResourceMeta>& onlineSounds() const = 0;
-    virtual muse::async::Notification onlineSoundsChanged() const = 0;
-    virtual muse::Progress onlineSoundsProcessingProgress() const = 0;
 };
 }

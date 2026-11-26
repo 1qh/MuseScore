@@ -73,15 +73,8 @@ void AppMenuModel::load()
         makeAddMenu(),
         makeFormatMenu(),
         makeToolsMenu(),
-        makePluginsMenu()
+        makeHelpMenu(false)
     };
-
-    if (globalConfiguration()->devModeEnabled()) {
-        items << makeHelpMenu(false);
-        items << makeDiagnosticsMenu();
-    } else {
-        items << makeHelpMenu(true);
-    }
 
     setItems(items);
 
@@ -204,11 +197,8 @@ MenuItem* AppMenuModel::makeFileMenu()
         makeSeparator(),
         makeMenuItem("file-save"),
         makeMenuItem("file-save-as"),
-        makeMenuItem("file-save-to-cloud"),
         makeMenu(TranslatableString("appshell/menu/file", "Save o&ther"), makeSaveOtherSubItems()),
-        makeMenu(TranslatableString("appshell/menu/file", "Pu&blish online"), makePublishOnlineSubItems()),
         makeSeparator(),
-        makeMenuItem("file-convert-to-score"),
         makeMenuItem("file-export"),
         makeSeparator(),
         makeMenuItem("project-properties"),
@@ -227,15 +217,6 @@ MenuItemList AppMenuModel::makeSaveOtherSubItems()
     MenuItemList subItems {
         makeMenuItem("file-save-a-copy"),
         makeMenuItem("file-save-selection"),
-    };
-    return subItems;
-}
-
-MenuItemList AppMenuModel::makePublishOnlineSubItems()
-{
-    MenuItemList subItems {
-        makeMenuItem("file-publish"),
-        makeMenuItem("file-share-audio"),
     };
     return subItems;
 }
@@ -304,7 +285,6 @@ MenuItem* AppMenuModel::makeViewMenu()
         makeMenuItem("toggle-selection-filter"),
         historyItem,
         makeMenuItem("toggle-navigator"),
-        makeMenuItem("toggle-braille-panel"),
         makeMenuItem("toggle-timeline"),
         makeMenuItem("toggle-mixer"),
         makeMenuItem("toggle-piano-keyboard"),
@@ -449,35 +429,10 @@ MenuItemList AppMenuModel::makePluginsMenuSubitems()
 
 MenuItem* AppMenuModel::makeHelpMenu(bool addDiagnosticsSubMenu)
 {
+    UNUSED(addDiagnosticsSubMenu);
     MenuItemList helpItems;
-
-    if (updateConfiguration()->isAppUpdatable()) {
-        helpItems << makeMenuItem("check-update");
-        helpItems << makeSeparator();
-    }
-
-    helpItems << makeMenuItem("online-handbook");
-    helpItems << makeMenuItem("ask-help");
-    helpItems << makeSeparator();
-
-    if (addDiagnosticsSubMenu) {
-        helpItems << makeDiagnosticsMenu();
-        helpItems << makeSeparator();
-    }
-
     helpItems << makeMenuItem("about-musescore", MenuItemRole::AboutRole);
-    helpItems << makeMenuItem("about-qt", MenuItemRole::AboutQtRole);
-    helpItems << makeMenuItem("about-musicxml");
-    helpItems << makeMenuItem("accessibility-statement");
     helpItems << makeSeparator();
-
-#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
-    if (isMuseSamplerModuleAdded()) {
-        helpItems << makeMenuItem("clear-online-sounds-cache");
-        helpItems << makeSeparator();
-    }
-#endif
-
     helpItems << makeMenuItem("revert-factory");
 
     return makeMenu(TranslatableString("appshell/menu/help", "&Help"), helpItems, "menu-help");
@@ -592,11 +547,8 @@ MenuItemList AppMenuModel::makeRecentScoresItems()
         UiAction action;
         action.code = "file-open";
         action.title = TranslatableString::untranslatable(file.displayName(/*includingExtension*/ true));
-        bool isCloud = projectConfiguration()->isCloudProject(file.path);
 
-        if (isCloud) {
-            action.iconCode = IconCode::Code::CLOUD;
-        }
+
 
         item->setAction(action);
 

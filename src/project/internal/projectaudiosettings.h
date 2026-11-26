@@ -83,30 +83,21 @@ private:
     ProjectAudioSettings(const muse::modularity::ContextPtr& iocCtx)
         : muse::Contextable(iocCtx) {}
 
-    muse::audio::AudioInputParams inputParamsFromJson(const QJsonObject& object) const;
     muse::audio::AudioOutputParams outputParamsFromJson(const QJsonObject& object) const;
     SoloMuteState soloMuteStateFromJson(const QJsonObject& object) const;
     muse::audio::AudioFxChain fxChainFromJson(const QJsonObject& fxChainObject) const;
     muse::audio::AudioFxParams fxParamsFromJson(const QJsonObject& object) const;
     muse::audio::AuxSendsParams auxSendsFromJson(const QJsonArray& objectList) const;
     muse::audio::AuxSendParams auxSendParamsFromJson(const QJsonObject& object) const;
-    muse::audio::AudioResourceMeta resourceMetaFromJson(const QJsonObject& object) const;
-    muse::audio::AudioUnitConfig unitConfigFromJson(const QJsonObject& object) const;
-    muse::audio::AudioResourceAttributes attributesFromJson(const QJsonObject& object) const;
 
-    QJsonObject inputParamsToJson(const muse::audio::AudioInputParams& params) const;
     QJsonObject outputParamsToJson(const muse::audio::AudioOutputParams& params) const;
     QJsonObject soloMuteStateToJson(const SoloMuteState& state) const;
     QJsonObject fxChainToJson(const muse::audio::AudioFxChain& fxChain) const;
     QJsonObject fxParamsToJson(const muse::audio::AudioFxParams& fxParams) const;
     QJsonArray auxSendsToJson(const muse::audio::AuxSendsParams& auxSends) const;
     QJsonObject auxSendParamsToJson(const muse::audio::AuxSendParams& auxParams) const;
-    QJsonObject resourceMetaToJson(const muse::audio::AudioResourceMeta& meta) const;
-    QJsonObject unitConfigToJson(const muse::audio::AudioUnitConfig& config) const;
-    QJsonObject attributesToJson(const muse::audio::AudioResourceAttributes& attributes) const;
 
     muse::audio::AudioSourceType sourceTypeFromString(const QString& string) const;
-    muse::audio::AudioResourceType resourceTypeFromString(const QString& string) const;
 
     QString sourceTypeToString(const muse::audio::AudioSourceType& type) const;
 

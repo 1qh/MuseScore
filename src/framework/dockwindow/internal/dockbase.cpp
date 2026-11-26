@@ -23,8 +23,10 @@
 #include "dockbase.h"
 
 #include <QRect>
+#include <QScreen>
 #include <QTimer>
 #include <QAction>
+#include <QtMath>
 
 #include "log.h"
 
@@ -49,6 +51,38 @@ static bool sizeInRange(const QSize& size, const QSize& min, const QSize& max)
     bool heightInRange = size.height() >= min.height() && size.height() <= max.height();
 
     return widthInRange && heightInRange;
+}
+
+static QSizeF contentSizeHint(const QQuickItem* item)
+{
+    QSizeF size(item->implicitWidth(), item->implicitHeight());
+    const QVariant contentWidth = item->property("contentWidth");
+    const QVariant contentHeight = item->property("contentHeight");
+    if (size.width() <= 0 && contentWidth.isValid()) {
+        size.setWidth(contentWidth.toReal());
+    }
+    if (size.height() <= 0 && contentHeight.isValid()) {
+        size.setHeight(contentHeight.toReal());
+    }
+    if (size.width() > 0 && size.height() > 0) {
+        return size;
+    }
+    QSizeF childrenSize;
+    for (const QQuickItem* child : item->childItems()) {
+        if (!child->isVisible()) {
+            continue;
+        }
+        const QSizeF childSize = contentSizeHint(child);
+        childrenSize.setWidth(std::max(childrenSize.width(), childSize.width() + std::max(qreal(0), child->x())));
+        childrenSize.setHeight(std::max(childrenSize.height(), childSize.height() + std::max(qreal(0), child->y())));
+    }
+    if (size.width() <= 0) {
+        size.setWidth(childrenSize.width());
+    }
+    if (size.height() <= 0) {
+        size.setHeight(childrenSize.height());
+    }
+    return size;
 }
 
 class DockWidgetImpl : public KDDockWidgets::DockWidgetQuick
@@ -221,6 +255,11 @@ bool DockBase::floatable() const
     return m_properties.floatable;
 }
 
+bool DockBase::defaultFloating() const
+{
+    return m_defaultFloating;
+}
+
 bool DockBase::floating() const
 {
     return m_floating;
@@ -341,6 +380,15 @@ void DockBase::setFloatable(bool floatable)
     emit floatableChanged();
 }
 
+void DockBase::setDefaultFloating(bool floating)
+{
+    if (m_defaultFloating == floating) {
+        return;
+    }
+    m_defaultFloating = floating;
+    emit defaultFloatingChanged();
+}
+
 void DockBase::setClosable(bool closable)
 {
     if (closable == m_properties.closable) {
@@ -435,6 +483,7 @@ void DockBase::init()
 
     applySizeConstraints();
     updateFloatingStatus();
+    QTimer::singleShot(0, this, &DockBase::fitContentOnFirstOpen);
 }
 
 void DockBase::deinit()
@@ -463,6 +512,27 @@ void DockBase::open()
     m_dockWidget->show();
 
     applySizeConstraints();
+    QTimer::singleShot(0, this, &DockBase::fitContentOnFirstOpen);
+}
+
+void DockBase::fitContentOnFirstOpen()
+{
+    if (!m_fitContentPending || !isOpen()) {
+        return;
+    }
+    m_fitContentPending = false;
+    if (!m_dockWidget->floatingWindow()) {
+        return;
+    }
+    const QQuickItem* content = m_dockWidget->widget();
+    if (!content) {
+        return;
+    }
+    const QSizeF hint = contentSizeHint(content);
+    const QSize fallback = m_defaultSize.expandedTo(QSize(300, 200));
+    const int width = hint.width() > 0 ? qCeil(hint.width()) : fallback.width();
+    const int height = hint.height() > 0 ? qCeil(hint.height()) : fallback.height();
+    resize(width, height);
 }
 
 void DockBase::close()
@@ -575,6 +645,21 @@ void DockBase::resize(int width, int height)
     width = qBound(m_minimumWidth, width, m_maximumWidth);
     height = qBound(m_minimumHeight, height, m_maximumHeight);
 
+    if (const auto* floatingWindow = m_dockWidget->floatingWindow()) {
+        if (floatingWindow->hasSingleDockWidget()) {
+            if (const QWindow* window = floatingWindow->windowHandle()) {
+                if (const QScreen* screen = window->screen()) {
+                    const QMargins margins = window->frameMargins();
+                    const QSize available = screen->availableGeometry().size();
+                    const int extraWidth = qMax(0, qCeil(floatingWindow->width() - this->width()));
+                    const int extraHeight = qMax(0, qCeil(floatingWindow->height() - this->height()));
+                    width = qMin(width, qMax(1, available.width() - extraWidth - margins.left() - margins.right()));
+                    height = qMin(height, qMax(1, available.height() - extraHeight - margins.top() - margins.bottom()));
+                }
+            }
+        }
+    }
+
     QSize minSizeBackup = QSize(m_minimumWidth, m_minimumHeight);
     QSize maxSizeBackup = QSize(m_maximumWidth, m_maximumHeight);
 
@@ -597,6 +682,29 @@ void DockBase::resize(int width, int height)
     m_maximumHeight = maxSizeBackup.height();
 
     applySizeConstraints();
+
+    //! NOTE A floating window grows downward and rightward from where it stands, so after the native window takes its
+    //! new size it is moved back inside the screen's visible area
+    QTimer::singleShot(0, this, [this]() {
+        keepFloatingWindowOnScreen();
+    });
+}
+
+void DockBase::keepFloatingWindowOnScreen()
+{
+    const auto* floatingWindow = m_dockWidget ? m_dockWidget->floatingWindow() : nullptr;
+    QWindow* window = floatingWindow ? floatingWindow->windowHandle() : nullptr;
+    const QScreen* screen = window ? window->screen() : nullptr;
+    if (!screen) {
+        return;
+    }
+    const QRect available = screen->availableGeometry();
+    const QRect frame = window->frameGeometry();
+    const int x = qBound(available.left(), frame.left(), qMax(available.left(), available.right() + 1 - frame.width()));
+    const int y = qBound(available.top(), frame.top(), qMax(available.top(), available.bottom() + 1 - frame.height()));
+    if (x != frame.left() || y != frame.top()) {
+        window->setFramePosition(QPoint(x, y));
+    }
 }
 
 muse::ui::INavigationSection* DockBase::navigationSection() const
@@ -670,6 +778,7 @@ void DockBase::componentComplete()
     connect(this, &DockBase::maximumSizeChanged, this, &DockBase::applySizeConstraints);
 
     m_defaultVisibility = isVisible();
+    m_defaultSize = preferredSize();
 }
 
 void DockBase::applySizeConstraints()

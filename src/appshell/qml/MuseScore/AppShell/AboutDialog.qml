@@ -109,37 +109,7 @@ StyledDialogView {
 
             StyledTextLabel {
                 Layout.fillWidth: true
-                text: {
-                    let museScoreUrl = aboutModel.museScoreUrl()
-
-                    //: %1 will be a link to the MuseScore website
-                    let line1 = qsTrc("appshell/about", "Visit %1 for new versions and more information.")
-                                .arg(`<a href="${museScoreUrl.url}">${museScoreUrl.displayName}</a>`)
-
-                    let line2 = qsTrc("appshell/about", "Get <a href=\"%1\">help</a> with the program or <a href=\"%2\">contribute</a> to its development.")
-                                .arg(aboutModel.museScoreForumUrl().url)
-                                .arg(aboutModel.museScoreContributionUrl().url)
-
-                    return line1 + "<br>" + line2
-                }
-                wrapMode: Text.WordWrap
-                maximumLineCount: 3
-            }
-
-            StyledTextLabel {
-                Layout.fillWidth: true
-
-                text: qsTrc("appshell/about", "For privacy information, see our <a href=\"%1\">privacy policy</a>.")
-                      .arg(aboutModel.museScorePrivacyPolicyUrl().url)
-
-                wrapMode: Text.WordWrap
-                maximumLineCount: 3
-            }
-
-            StyledTextLabel {
-                Layout.fillWidth: true
-                text: qsTrc("appshell/about", "Copyright © 1999-2026 MuseScore Limited and others.\nPublished under the <a href=\"%1\">GNU General Public License version 3</a>.")
-                      .arg("https://www.gnu.org/licenses/gpl-3.0.html")
+                text: qsTrc("appshell/about", "Copyright © 1999-2026 MuseScore Limited and others.\nPublished under the GNU General Public License version 3.")
                       .replace("\n", "<br>")
 
                 wrapMode: Text.WordWrap

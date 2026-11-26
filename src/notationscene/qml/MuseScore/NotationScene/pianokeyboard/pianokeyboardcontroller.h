@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include "async/asyncable.h"
 #include "audio/common/audiotypes.h"
 
@@ -52,6 +53,13 @@ public:
     void setPressedKey(std::optional<piano_key_t> key);
     void setHoveredKey(std::optional<piano_key_t> key);
 
+    size_t keyPlaybackLayer(piano_key_t key) const;
+    static constexpr size_t livePlaybackLayer() { return 1; }
+    static constexpr size_t staffPlaybackLayer(size_t staff) { return staff + livePlaybackLayer() + 1; }
+    static constexpr size_t chordPlaybackLayer(size_t staffCount) { return staffPlaybackLayer(staffCount); }
+    void setExportPlaybackPosition(const INotationPlaybackPtr& playback,
+                                   const engraving::InstrumentTrackIdSet& tracks,
+                                   std::optional<muse::audio::secs_t> position);
     KeyState keyState(piano_key_t key) const;
     muse::async::Notification keyStatesChanged() const;
 
@@ -68,7 +76,11 @@ private:
     void onPlaybackPositionChanged(muse::audio::secs_t position);
     void refreshPlaybackKeys();
     void updatePlaybackKeys(muse::audio::secs_t position, bool force = false);
-    bool replacePlaybackKeys(std::unordered_set<piano_key_t> keys);
+    void updatePlaybackLayers(const INotationPlaybackPtr& playback,
+                              const std::vector<engraving::InstrumentTrackIdSet>& layers,
+                              muse::audio::secs_t position);
+
+    bool replacePlaybackKeys(PianoKeyLayers keys);
 
     void sendNoteOn(piano_key_t key);
     void sendNoteOff(piano_key_t key);
@@ -79,7 +91,9 @@ private:
     std::optional<piano_key_t> m_hoveredKey = std::nullopt;
     std::unordered_set<piano_key_t> m_keys;
     std::unordered_set<piano_key_t> m_otherNotesInChord;
-    std::unordered_set<piano_key_t> m_playbackKeys;
+    std::unordered_map<piano_key_t, size_t> m_selectionLayers;
+    PianoKeyLayers m_playbackKeys {};
+    std::array<std::array<bool, 128>, 16> m_liveKeys {};
 
     bool m_isFromMidi = false;
     bool m_isInitialized = false;
@@ -89,7 +103,7 @@ private:
     muse::audio::PlaybackStatus m_playbackStatus = muse::audio::PlaybackStatus::Stopped;
     std::optional<muse::audio::secs_t> m_lastPlaybackPosition;
     std::optional<muse::audio::secs_t> m_countInStartPosition;
-    std::optional<engraving::InstrumentTrackIdSet> m_audibleInstrumentTrackIds;
+    std::optional<std::vector<engraving::InstrumentTrackIdSet> > m_playbackTrackLayers;
 
     muse::async::Notification m_keyStatesChanged;
 };

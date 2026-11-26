@@ -25,7 +25,6 @@ import QtQuick.Controls
 
 import Muse.Ui
 import Muse.Shortcuts
-import Muse.Tours
 import Muse.Toast
 
 import MuseScore.AppShell
@@ -46,6 +45,23 @@ ApplicationWindow {
     minimumHeight: 500
 
     visible: false
+
+    // On macOS the window fills the screen the first time it shows in each launch, as the Window menu's Fill does;
+    // this runs after the saved window size is restored, which it would otherwise override
+    property bool filledOnLaunch: false
+
+    onVisibleChanged: {
+        if (visible && !filledOnLaunch && Qt.platform.os === "osx") {
+            filledOnLaunch = true
+            Qt.callLater(bridge.fillScreen)
+        }
+    }
+
+    // The app runs under the merged title bar: no automatic padding for the title bar's safe area
+    topPadding: 0
+    leftPadding: 0
+    rightPadding: 0
+    bottomPadding: 0
 
     color: ui.theme.backgroundPrimaryColor
 
@@ -73,7 +89,6 @@ ApplicationWindow {
 
     ToolTipProvider { }
 
-    ToursProvider { }
 
     //! NOTE Need only create
     Shortcuts { }

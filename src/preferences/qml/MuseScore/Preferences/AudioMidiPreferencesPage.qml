@@ -106,33 +106,6 @@ PreferencesPage {
             }
         }
 
-        SeparatorLine { visible: onlineSoundsSection.visible }
-
-        OnlineSoundsSection {
-            id: onlineSoundsSection
-
-            visible: audioMidiModel.onlineSoundsSectionVisible()
-
-            showErrorDialog: audioMidiModel.shouldShowOnlineSoundsProcessingError
-            autoProcessOnlineSoundsInBackground: audioMidiModel.autoProcessOnlineSoundsInBackground
-            progressBarMode: audioMidiModel.onlineSoundsShowProgressBarMode
-
-            navigation.section: root.navigationSection
-            navigation.order: root.navigationOrderStart + 5
-
-            onShowErrorDialogChangeRequested: function(value) {
-                audioMidiModel.shouldShowOnlineSoundsProcessingError = value
-            }
-
-            onAutoProcessOnlineSoundsInBackgroundChangeRequested: function(value) {
-                audioMidiModel.autoProcessOnlineSoundsInBackground = value
-            }
-
-            onProgressBarModeChangeRequired: function(mode) {
-                audioMidiModel.onlineSoundsShowProgressBarMode = mode
-            }
-        }
-
         /*
          * TODO: https://github.com/musescore/MuseScore/issues/9807
         SeparatorLine {}

@@ -43,14 +43,10 @@ public:
 
     const InstrumentTrackIdMap& instrumentTrackIdMap() const override;
     engraving::InstrumentTrackIdSet audibleInstrumentTrackIds() const override;
-    const AuxTrackIdMap& auxTrackIdMap() const override;
 
     muse::async::Channel<muse::audio::TrackId> trackAdded() const override;
     muse::async::Channel<muse::audio::TrackId> trackRemoved() const override;
     muse::async::Channel<bool> playbackInitedChanged() const override;
-
-    std::string auxChannelName(muse::audio::aux_channel_idx_t index) const override;
-    muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> auxChannelNameChanged() const override;
 
     muse::async::Promise<muse::audio::SoundPresetList> availableSoundPresets(
         const engraving::InstrumentTrackId& instrumentTrackId) const override;
@@ -91,8 +87,5 @@ public:
     void setNotation(notation::INotationPtr notation) override;
     void setIsExportingAudio(bool exporting) override;
 
-    const std::map<muse::audio::TrackId, muse::audio::AudioResourceMeta>& onlineSounds() const override;
-    muse::async::Notification onlineSoundsChanged() const override;
-    muse::Progress onlineSoundsProcessingProgress() const override;
 };
 }

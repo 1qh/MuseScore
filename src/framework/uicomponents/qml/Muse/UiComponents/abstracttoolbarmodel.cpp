@@ -130,7 +130,10 @@ void AbstractToolBarModel::setItems(const ToolBarItemList& items)
 
     beginResetModel();
 
-    qDeleteAll(m_items);
+    //! NOTE A view may still hold these items until it learns of the change, so each is deleted only after that
+    for (auto* item : std::as_const(m_items)) {
+        item->deleteLater();
+    }
     m_items.clear();
 
     //! NOTE: make sure that we don't have two separators sequentially

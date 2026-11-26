@@ -33,6 +33,10 @@ target_sources(iex_videoexport PRIVATE
 )
 
 target_link_libraries(iex_videoexport PRIVATE Qt::Concurrent muse::media engraving)
+if(MUE_BUILD_NOTATIONSCENE_QML)
+    target_compile_definitions(iex_videoexport PRIVATE MUE_VIDEOEXPORT_PRACTICE)
+    target_link_libraries(iex_videoexport PRIVATE notationscene_qml Qt::Qml Qt::Quick)
+endif()
 
 qt_add_resources(iex_videoexport iex_videoexport_resources
     PREFIX

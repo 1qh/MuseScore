@@ -140,7 +140,10 @@ bool VideoEncoder::open(const muse::io::path_t& fileName, const Options& options
     m_ffmpeg->videoStream->time_base.num = 1;
 
     // find the video encoder
-    m_ffmpeg->codec = m_ffmpegHandler->avcodec_find_encoder(AV_CODEC_ID_H264);
+    m_ffmpeg->codec = options.hevcVideoToolbox
+                      ? (m_ffmpegHandler->avcodec_find_encoder_by_name
+                         ? m_ffmpegHandler->avcodec_find_encoder_by_name("hevc_videotoolbox") : nullptr)
+                      : m_ffmpegHandler->avcodec_find_encoder(AV_CODEC_ID_H264);
     if (!m_ffmpeg->codec) {
         LOGE() << "not found codec";
         return false;
@@ -152,7 +155,10 @@ bool VideoEncoder::open(const muse::io::path_t& fileName, const Options& options
     }
 
     m_ffmpeg->videoStream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
-    m_ffmpeg->videoStream->codecpar->codec_id = AV_CODEC_ID_H264;
+    m_ffmpeg->videoStream->codecpar->codec_id = options.hevcVideoToolbox ? AV_CODEC_ID_HEVC : AV_CODEC_ID_H264;
+    if (options.hevcVideoToolbox) {
+        m_ffmpeg->videoStream->codecpar->codec_tag = MKTAG('h', 'v', 'c', '1');
+    }
     m_ffmpeg->videoStream->codecpar->width = options.width;
     m_ffmpeg->videoStream->codecpar->height = options.height;
     m_ffmpeg->videoStream->codecpar->format = AV_PIX_FMT_YUV420P;
@@ -164,7 +170,8 @@ bool VideoEncoder::open(const muse::io::path_t& fileName, const Options& options
         return false;
     }
 
-    m_ffmpeg->codecCtx->profile = AV_PROFILE_H264_MAIN;
+    m_ffmpeg->codecCtx->profile = options.hevcVideoToolbox
+                                 ? AV_PROFILE_HEVC_MAIN : AV_PROFILE_H264_MAIN;
     m_ffmpeg->codecCtx->time_base.den = options.fps;
     m_ffmpeg->codecCtx->time_base.num = 1;
     m_ffmpeg->codecCtx->gop_size = options.gop;
@@ -666,7 +673,8 @@ bool VideoEncoder::addAudio(const io::path_t& audioPath)
                 return false;
             }
             m_ffmpegHandler->avcodec_parameters_copy(outStream->codecpar, videoFmtCtx->streams[i]->codecpar);
-            outStream->codecpar->codec_tag = 0;
+            outStream->codecpar->codec_tag = outStream->codecpar->codec_id == AV_CODEC_ID_HEVC
+                                            ? MKTAG('h', 'v', 'c', '1') : 0;
             outStream->time_base = videoFmtCtx->streams[i]->time_base;
             outVideoIdx = outStream->index;
             break;

@@ -46,8 +46,6 @@ MixerPanelSection {
             case MixerChannelItem.PrimaryInstrument:
             case MixerChannelItem.SecondaryInstrument:
                 return ui.theme.accentColor
-            case MixerChannelItem.Aux:
-                return "#63D47B"
             case MixerChannelItem.Master:
                 return "#F87BDC"
             }

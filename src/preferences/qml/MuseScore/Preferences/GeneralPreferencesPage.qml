@@ -36,51 +36,17 @@ PreferencesPage {
 
     GeneralPreferencesModel {
         id: preferencesModel
-
-        onReceivingUpdateForCurrentLanguage: function(current, total, status) {
-            languagesSection.setUpdateProgress(current, total, status)
-        }
     }
 
     Column {
         width: parent.width
         spacing: root.sectionsSpacing
 
-        LanguagesSection {
-            id: languagesSection
-
-            languages: preferencesModel.languages
-            currentLanguageCode: preferencesModel.currentLanguageCode
-            restartRequired: preferencesModel.restartRequired
-
-            navigation.section: root.navigationSection
-            navigation.order: root.navigationOrderStart + 1
-
-            onLanguageSelected: function(languageCode) {
-                preferencesModel.currentLanguageCode = languageCode
-            }
-
-            onCheckForUpdateRequested: {
-                preferencesModel.checkUpdateForCurrentLanguage()
-            }
-        }
-
-        SeparatorLine { }
-
         ProgramStartSection {
             model: preferencesModel
 
             navigation.section: root.navigationSection
             navigation.order: root.navigationOrderStart + 2
-        }
-
-        SeparatorLine { }
-
-        WelcomeDialogSection {
-            model: preferencesModel
-
-            navigation.section: root.navigationSection
-            navigation.order: root.navigationOrderStart + 3
         }
 
         /*
@@ -120,19 +86,5 @@ PreferencesPage {
             }
         }*/
 
-        SeparatorLine { }
-
-        AutomaticUpdateSection {
-            isAppUpdatable: preferencesModel.isAppUpdatable()
-            needCheckForNewAppVersion: preferencesModel.needCheckForNewAppVersion
-            museScorePrivacyPolicyUrl: preferencesModel.museScorePrivacyPolicyUrl()
-
-            navigation.section: root.navigationSection
-            navigation.order: root.navigationOrderStart + 4
-
-            onNeedCheckForNewAppVersionChangeRequested: function(check) {
-                preferencesModel.needCheckForNewAppVersion = check
-            }
-        }
     }
 }

@@ -39,8 +39,10 @@ Item {
 
     readonly property PaletteProvider paletteProvider: paletteRootModel.paletteProvider
 
-    implicitHeight: 4 * palettesPanelHeader.implicitHeight
-    implicitWidth: paletteTree.implicitWidth
+    implicitHeight: palettesPanelHeader.implicitHeight + contentColumn.spacing
+                    + (searchHint.visible ? searchHint.implicitHeight
+                       : notFoundHint.visible ? notFoundHint.implicitHeight : paletteTree.contentHeight)
+    implicitWidth: Math.max(paletteTree.implicitWidth, palettesPanelHeader.implicitWidth + 2 * contentColumn.sideMargin)
 
     function applyCurrentPaletteElement() {
         paletteTree.applyCurrentElement();

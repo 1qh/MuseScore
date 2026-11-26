@@ -167,7 +167,7 @@ void NotationConfiguration::init()
         m_foregroundChanged.notify();
     });
 
-    settings()->setDefaultValue(INVERT_SCORE_COLOR, Val(false));
+    settings()->setDefaultValue(INVERT_SCORE_COLOR, Val(true));
     settings()->valueChanged(INVERT_SCORE_COLOR).onReceive(nullptr, [this](const Val&) {
         m_scoreInversionChanged.notify();
         m_foregroundChanged.notify();

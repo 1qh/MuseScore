@@ -23,6 +23,7 @@
 #include "playbackmodel.h"
 
 #include <limits>
+#include <utility>
 
 #include "dom/fret.h"
 #include "dom/harmony.h"
@@ -413,6 +414,70 @@ void PlaybackModel::triggerCountIn(int tick, muse::mpe::duration_t& countInDurat
     PlaybackEventsMap result;
     m_renderer.renderCountIn(m_score, tick, 0, profile, result, countInDuration);
     trackPlaybackData->second.offStream.send(result, {}, true /*flushOffstream*/);
+}
+
+muse::mpe::duration_t PlaybackModel::setExportCountIn(bool enabled)
+{
+    if (!enabled) {
+        if (m_exportRestoreData) {
+            m_playbackDataMap = std::move(*m_exportRestoreData);
+            m_exportRestoreData.reset();
+            invalidateActivePlaybackPitches();
+            for (auto& pair : m_playbackDataMap) {
+                sendEvents(pair.first);
+            }
+        }
+        return 0;
+    }
+    if (!m_score || !m_score->firstMeasure() || m_exportRestoreData
+        || m_playbackDataMap.find(METRONOME_TRACK_ID) == m_playbackDataMap.end()) {
+        return -1;
+    }
+    PlaybackEventsMap countIn;
+    duration_t duration = 0;
+    m_renderer.renderCountIn(m_score, m_score->firstMeasure()->tick().ticks(), 0,
+                             defaultActiculationProfile(METRONOME_TRACK_ID), countIn, duration, true);
+    if (duration <= 0 || countIn.empty()) {
+        return -1;
+    }
+    m_exportRestoreData = m_playbackDataMap;
+    for (auto& pair : m_playbackDataMap) {
+        PlaybackData& data = pair.second;
+        PlaybackEventsMap shifted;
+        for (const auto& entry : std::as_const(data.originEvents)) {
+            PlaybackEventList events = entry.second;
+            for (auto& event : events) {
+                if (auto* note = std::get_if<muse::mpe::NoteEvent>(&event)) {
+                    auto arrangement = note->arrangementCtx();
+                    auto pitch = note->pitchCtx();
+                    auto expression = note->expressionCtx();
+                    arrangement.nominalTimestamp += duration;
+                    arrangement.actualTimestamp += duration;
+                    for (auto& articulation : expression.articulations) {
+                        articulation.second.meta.timestamp += duration;
+                    }
+                    event = muse::mpe::NoteEvent(std::move(arrangement), std::move(pitch), std::move(expression));
+                }
+            }
+            shifted[entry.first + duration] = std::move(events);
+        }
+        if (pair.first == METRONOME_TRACK_ID) {
+            for (const auto& entry : std::as_const(countIn)) {
+                shifted[entry.first] = entry.second;
+            }
+        }
+        DynamicLevelLayers dynamics;
+        for (const auto& layer : std::as_const(data.dynamics)) {
+            for (const auto& entry : layer.second) {
+                dynamics[layer.first][entry.first + duration] = entry.second;
+            }
+        }
+        data.originEvents = std::move(shifted);
+        data.dynamics = std::move(dynamics);
+        sendEvents(pair.first);
+    }
+    invalidateActivePlaybackPitches();
+    return duration;
 }
 
 InstrumentTrackIdSet PlaybackModel::existingTrackIdSet() const

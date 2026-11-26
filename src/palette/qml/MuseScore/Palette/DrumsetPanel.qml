@@ -32,6 +32,8 @@ Item {
     property alias navigationSection: navPanel.section
     property alias contentNavigationPanelOrderStart: navPanel.order
 
+    implicitWidth: contentRow.implicitWidth + contentRow.anchors.leftMargin + contentRow.anchors.rightMargin
+    implicitHeight: contentRow.implicitHeight
     NavigationPanel {
         id: navPanel
         name: "DrumsetSection"
@@ -40,6 +42,7 @@ Item {
     }
 
     RowLayout {
+        id: contentRow
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 8
@@ -55,7 +58,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 height: 20
-                width: customizeKitButton.width
+                width: Math.max(implicitWidth, customizeKitButton.implicitWidth)
 
                 text: drumsetView.pitchName
             }

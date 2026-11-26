@@ -26,6 +26,8 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
 
 #ifdef MUSE_MODULE_MULTIWINDOWS
 #include "multiwindows/resourcelockguard.h"
@@ -112,7 +114,19 @@ void Settings::reset(bool keepDefaultSettings, bool notifyAboutChanges, bool not
     m_localSettings.clear();
 
     if (!keepDefaultSettings) {
-        QDir(dataPath()).removeRecursively();
+        // The data folder also holds the user's own folders (SoundFonts, Scores, ...), so a reset removes only the
+        // app's own files there, named here, and never anything else
+        static const QStringList APP_OWNED = { "logs", "workspaces", "session", "cloud_scores", "extensions", "locale",
+                                               "recent_files.json", "update_request_history.json" };
+        const QDir data(dataPath());
+        for (const QString& name : APP_OWNED) {
+            const QFileInfo entry(data.filePath(name));
+            if (entry.isDir()) {
+                QDir(entry.filePath()).removeRecursively();
+            } else if (entry.exists()) {
+                QFile::remove(entry.filePath());
+            }
+        }
         QDir().mkpath(dataPath());
     }
 
@@ -244,7 +258,7 @@ QString Settings::dataPath() const
 #ifdef WIN_PORTABLE
     return QDir::cleanPath(QString("%1/../../../Data/settings").arg(QCoreApplication::applicationDirPath()));
 #else
-    return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    return QDir::homePath() + "/mslite";
 #endif
 }
 

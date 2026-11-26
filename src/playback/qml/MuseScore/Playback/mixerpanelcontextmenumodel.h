@@ -37,10 +37,6 @@ class MixerPanelContextMenuModel : public muse::uicomponents::AbstractMenuModel,
 
     Q_PROPERTY(bool labelsSectionVisible READ labelsSectionVisible NOTIFY labelsSectionVisibleChanged)
     Q_PROPERTY(bool soundSectionVisible READ soundSectionVisible NOTIFY soundSectionVisibleChanged)
-    Q_PROPERTY(bool audioFxSectionVisible READ audioFxSectionVisible NOTIFY audioFxSectionVisibleChanged)
-    Q_PROPERTY(bool auxSendsSectionVisible READ auxSendsSectionVisible NOTIFY auxSendsSectionVisibleChanged)
-    Q_PROPERTY(bool balanceSectionVisible READ balanceSectionVisible NOTIFY balanceSectionVisibleChanged)
-    Q_PROPERTY(bool volumeSectionVisible READ volumeSectionVisible NOTIFY volumeSectionVisibleChanged)
     Q_PROPERTY(bool faderSectionVisible READ faderSectionVisible NOTIFY faderSectionVisibleChanged)
     Q_PROPERTY(bool muteAndSoloSectionVisible READ muteAndSoloSectionVisible NOTIFY muteAndSoloSectionVisibleChanged)
     Q_PROPERTY(bool titleSectionVisible READ titleSectionVisible NOTIFY titleSectionVisibleChanged)
@@ -55,10 +51,6 @@ public:
 
     bool labelsSectionVisible() const;
     bool soundSectionVisible() const;
-    bool audioFxSectionVisible() const;
-    bool auxSendsSectionVisible() const;
-    bool balanceSectionVisible() const;
-    bool volumeSectionVisible() const;
     bool faderSectionVisible() const;
     bool muteAndSoloSectionVisible() const;
     bool titleSectionVisible() const;
@@ -68,10 +60,6 @@ public:
 signals:
     void labelsSectionVisibleChanged();
     void soundSectionVisibleChanged();
-    void audioFxSectionVisibleChanged();
-    void auxSendsSectionVisibleChanged();
-    void balanceSectionVisibleChanged();
-    void volumeSectionVisibleChanged();
     void faderSectionVisibleChanged();
     void muteAndSoloSectionVisibleChanged();
     void titleSectionVisibleChanged();
@@ -80,12 +68,8 @@ private:
     bool isSectionVisible(MixerSectionType sectionType) const;
 
     muse::uicomponents::MenuItem* buildSectionVisibleItem(MixerSectionType sectionType);
-    muse::uicomponents::MenuItem* buildAuxSendVisibleItem(muse::audio::aux_channel_idx_t index);
-    muse::uicomponents::MenuItem* buildAuxChannelVisibleItem(muse::audio::aux_channel_idx_t index);
 
     void toggleMixerSection(const muse::actions::ActionData& args);
-    void toggleAuxSend(const muse::actions::ActionData& args);
-    void toggleAuxChannel(const muse::actions::ActionData& args);
 
     void emitMixerSectionVisibilityChanged(MixerSectionType sectionType);
 

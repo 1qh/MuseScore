@@ -106,79 +106,9 @@ muse::io::path_t ProjectConfigurationStub::defaultOpenProjectsPath() const
     return muse::io::path_t();
 }
 
-muse::io::path_t ProjectConfigurationStub::defaultConvertFilePath() const
-{
-    return muse::io::path_t();
-}
-
-void ProjectConfigurationStub::setLastOpenedConvertFilePath(const muse::io::path_t&)
-{
-}
-
-bool ProjectConfigurationStub::shouldAskSaveLocationType() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setShouldAskSaveLocationType(bool)
-{
-}
-
-bool ProjectConfigurationStub::isCloudProject(const muse::io::path_t&) const
-{
-    return false;
-}
-
-bool ProjectConfigurationStub::isLegacyCloudProject(const muse::io::path_t&) const
-{
-    return false;
-}
-
-muse::io::path_t ProjectConfigurationStub::cloudProjectPath(int) const
-{
-    return muse::io::path_t();
-}
-
-int ProjectConfigurationStub::cloudScoreIdFromPath(const muse::io::path_t&) const
-{
-    return 0;
-}
-
-muse::io::path_t ProjectConfigurationStub::cloudProjectSavingPath(int) const
-{
-    return muse::io::path_t();
-}
-
 muse::io::path_t ProjectConfigurationStub::defaultSavingFilePath(INotationProjectPtr, const std::string&, const std::string&) const
 {
     return muse::io::path_t();
-}
-
-SaveLocationType ProjectConfigurationStub::lastUsedSaveLocationType() const
-{
-    return SaveLocationType::Undefined;
-}
-
-void ProjectConfigurationStub::setLastUsedSaveLocationType(SaveLocationType)
-{
-}
-
-bool ProjectConfigurationStub::shouldWarnBeforePublish() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setShouldWarnBeforePublish(bool)
-{
-}
-
-bool ProjectConfigurationStub::shouldWarnBeforeSavingPubliclyToCloud() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setShouldWarnBeforeSavingPubliclyToCloud(bool)
-{
 }
 
 int ProjectConfigurationStub::homeScoresPageTabIndex() const
@@ -258,39 +188,6 @@ muse::async::Channel<int> ProjectConfigurationStub::autoSaveIntervalChanged() co
     return ch;
 }
 
-bool ProjectConfigurationStub::alsoShareAudioCom() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setAlsoShareAudioCom(bool)
-{
-}
-
-muse::async::Channel<bool> ProjectConfigurationStub::alsoShareAudioComChanged() const
-{
-    static muse::async::Channel<bool> ch;
-    return ch;
-}
-
-bool ProjectConfigurationStub::showAlsoShareAudioComDialog() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setShowAlsoShareAudioComDialog(bool)
-{
-}
-
-bool ProjectConfigurationStub::hasAskedAlsoShareAudioCom() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setHasAskedAlsoShareAudioCom(bool)
-{
-}
-
 muse::io::path_t ProjectConfigurationStub::newProjectTemporaryPath() const
 {
     return muse::io::path_t();
@@ -310,91 +207,9 @@ void ProjectConfigurationStub::setShouldDestinationFolderBeOpenedOnExport(bool)
 {
 }
 
-QUrl ProjectConfigurationStub::supportForumUrl() const
-{
-    return QUrl();
-}
-
-QUrl ProjectConfigurationStub::dotComBugReportUrl() const
-{
-    return QUrl();
-}
-
-QUrl ProjectConfigurationStub::scoreUploadingGuidelinesUrl() const
-{
-    return QUrl();
-}
-
-QUrl ProjectConfigurationStub::termsOfUseUrl() const
-{
-    return QUrl();
-}
-
-bool ProjectConfigurationStub::openDetailedProjectUploadedDialog() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setOpenDetailedProjectUploadedDialog(bool)
-{
-}
-
-bool ProjectConfigurationStub::hasAskedAudioGenerationSettings() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setHasAskedAudioGenerationSettings(bool)
-{
-}
-
-GenerateAudioTimePeriodType ProjectConfigurationStub::generateAudioTimePeriodType() const
-{
-    return GenerateAudioTimePeriodType::Never;
-}
-
-void ProjectConfigurationStub::setGenerateAudioTimePeriodType(GenerateAudioTimePeriodType)
-{
-}
-
-muse::async::Channel<int> ProjectConfigurationStub::generateAudioTimePeriodTypeChanged() const
-{
-    static muse::async::Channel<int> ch;
-    return ch;
-}
-
-int ProjectConfigurationStub::numberOfSavesToGenerateAudio() const
-{
-    return 1;
-}
-
-void ProjectConfigurationStub::setNumberOfSavesToGenerateAudio(int)
-{
-}
-
-muse::async::Channel<int> ProjectConfigurationStub::numberOfSavesToGenerateAudioChanged() const
-{
-    static muse::async::Channel<int> ch;
-    return ch;
-}
-
-muse::io::path_t ProjectConfigurationStub::temporaryMp3FilePathTemplate() const
-{
-    return muse::io::path_t();
-}
-
 muse::io::path_t ProjectConfigurationStub::projectBackupPath(const muse::io::path_t&) const
 {
     return muse::io::path_t();
-}
-
-bool ProjectConfigurationStub::showCloudIsNotAvailableWarning() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setShowCloudIsNotAvailableWarning(bool)
-{
 }
 
 bool ProjectConfigurationStub::disableVersionChecking() const
@@ -415,16 +230,3 @@ void ProjectConfigurationStub::setCreateBackupBeforeSaving(bool)
 {
 }
 
-bool ProjectConfigurationStub::showConvertFileProcessingDialog() const
-{
-    return false;
-}
-
-void ProjectConfigurationStub::setShowConvertFileProcessingDialog(bool)
-{
-}
-
-muse::io::path_t ProjectConfigurationStub::watchedConvertsJsonPath() const
-{
-    return muse::io::path_t();
-}

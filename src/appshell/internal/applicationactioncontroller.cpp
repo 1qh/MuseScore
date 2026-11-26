@@ -67,9 +67,6 @@ void ApplicationActionController::init()
     dispatcher()->reg(this, "about-musescore", this, &ApplicationActionController::openAboutDialog);
     dispatcher()->reg(this, "about-qt", this, &ApplicationActionController::openAboutQtDialog);
     dispatcher()->reg(this, "about-musicxml", this, &ApplicationActionController::openAboutMusicXMLDialog);
-    dispatcher()->reg(this, "online-handbook", this, &ApplicationActionController::openOnlineHandbookPage);
-    dispatcher()->reg(this, "ask-help", this, &ApplicationActionController::openAskForHelpPage);
-    dispatcher()->reg(this, "accessibility-statement", this, &ApplicationActionController::openAccessibilityStatementPage);
     dispatcher()->reg(this, "preference-dialog", this, &ApplicationActionController::openPreferencesDialog);
 
     dispatcher()->reg(this, "revert-factory", this, &ApplicationActionController::revertToFactorySettings);
@@ -149,12 +146,6 @@ ApplicationActionController::DragTarget ApplicationActionController::dragTarget(
             return DragTarget::SoundFont;
         } else if (extensionInstaller()->isFileSupported(filePath)) {
             return DragTarget::Extension;
-        } else {
-            bool scorePageWithProjectOpen = interactive()->currentUri().val == NOTATION_URI
-                                            && globalContext()->currentProject() != nullptr;
-            if (!scorePageWithProjectOpen && convertFileToScoreScenario()->isFileSupported(filePath)) {
-                return DragTarget::ConvertibleFile;
-            }
         }
     }
     return DragTarget::Unknown;
@@ -212,17 +203,7 @@ bool ApplicationActionController::onDropEvent(QDropEvent* event)
                     extensionInstaller()->installExtension(filePath);
                 });
         } break;
-        case DragTarget::ConvertibleFile: {
-            muse::io::paths_t paths;
-            for (const QUrl& u : urls) {
-                if (u.isLocalFile()) {
-                    paths.push_back(muse::io::path_t(u.toLocalFile()));
-                }
-            }
-            async::Async::call(this, [this, paths]() {
-                    convertFileToScoreScenario()->convertFiles(paths);
-                });
-        } break;
+
         case DragTarget::Unknown:
             shouldBeHandled = false;
             break;
@@ -306,24 +287,6 @@ void ApplicationActionController::openAboutQtDialog()
 void ApplicationActionController::openAboutMusicXMLDialog()
 {
     interactive()->open("musescore://about/musicxml");
-}
-
-void ApplicationActionController::openOnlineHandbookPage()
-{
-    std::string handbookUrl = configuration()->handbookUrl();
-    interactive()->openUrl(handbookUrl);
-}
-
-void ApplicationActionController::openAskForHelpPage()
-{
-    std::string askForHelpUrl = configuration()->askForHelpUrl();
-    interactive()->openUrl(askForHelpUrl);
-}
-
-void ApplicationActionController::openAccessibilityStatementPage()
-{
-    std::string accessibilityStatementUrl = configuration()->accessibilityStatementUrl();
-    interactive()->openUrl(accessibilityStatementUrl);
 }
 
 void ApplicationActionController::openPreferencesDialog()

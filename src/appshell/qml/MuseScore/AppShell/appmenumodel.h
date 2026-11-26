@@ -41,7 +41,6 @@
 #include "ui/inavigationcontroller.h"
 #include "ui/iuiactionsregister.h"
 #include "ui/iuiconfiguration.h"
-#include "update/iupdateconfiguration.h"
 #include "workspace/iworkspacemanager.h"
 
 #include "iappshellconfiguration.h"
@@ -60,7 +59,6 @@ class AppMenuModel : public muse::uicomponents::AbstractMenuModel
 
 public:
     muse::GlobalInject<muse::ui::IUiConfiguration> uiConfiguration;
-    muse::GlobalInject<muse::update::IUpdateConfiguration> updateConfiguration;
     muse::GlobalInject<IAppShellConfiguration> configuration;
     muse::GlobalInject<muse::IGlobalConfiguration> globalConfiguration;
     muse::GlobalInject<project::IProjectConfiguration> projectConfiguration;
@@ -95,7 +93,6 @@ private:
 
     muse::uicomponents::MenuItem* makeFileMenu();
     muse::uicomponents::MenuItemList makeSaveOtherSubItems();
-    muse::uicomponents::MenuItemList makePublishOnlineSubItems();
 
     muse::uicomponents::MenuItem* makeEditMenu();
     muse::uicomponents::MenuItem* makeViewMenu();

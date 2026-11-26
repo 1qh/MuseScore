@@ -47,15 +47,18 @@ ColumnLayout {
     signal resizeRequested(var newWidth, var newHeight)
 
     spacing: 0
+    implicitWidth: flickable.contentWidth + (verticalScrollBar.isScrollbarNeeded ? verticalScrollBar.implicitWidth : 0)
+    implicitHeight: contentColumn.height + (horizontalScrollBar.isScrollbarNeeded ? scrollBarRow.height : 0)
 
-    function resizePanelToContentHeight() {
+    function resizePanelToContent() {
         if (contentColumn.completed && implicitHeight > 0) {
-            root.resizeRequested(width, implicitHeight)
+            root.resizeRequested(implicitWidth, implicitHeight)
         }
     }
 
+    onImplicitWidthChanged: Qt.callLater(root.resizePanelToContent)
     onImplicitHeightChanged: {
-        root.resizePanelToContentHeight()
+        Qt.callLater(root.resizePanelToContent)
     }
 
     QtObject {
@@ -131,19 +134,24 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        contentWidth: contentColumn.width + 1 // for trailing separator
+        contentWidth: (contextMenuModel.labelsSectionVisible ? prv.headerWidth + 1 : 0)
+                      + mixerPanelModel.count * (prv.channelItemWidth + 1)
         contentHeight: Math.max(contentColumn.height, height)
 
+        implicitWidth: contentWidth
         implicitHeight: contentColumn.height
 
         interactive: (height < contentHeight || width < contentWidth) && !flickable.resourcePickingActive
 
         ScrollBar.horizontal: horizontalScrollBar
 
-        ScrollBar.vertical: StyledScrollBar { policy: ScrollBar.AlwaysOn }
+        ScrollBar.vertical: StyledScrollBar {
+            id: verticalScrollBar
+            policy: ScrollBar.AlwaysOn
+        }
 
         property bool completed: false
-        property bool resourcePickingActive: soundSection.resourcePickingActive || fxSection.resourcePickingActive
+        property bool resourcePickingActive: soundSection.resourcePickingActive
 
         function positionViewAtEnd() {
             if (!flickable.completed) {
@@ -184,13 +192,14 @@ ColumnLayout {
             id: contentColumn
 
             anchors.bottom: parent.bottom
-            width: childrenRect.width
+            width: flickable.contentWidth
             spacing: 0
 
             property bool completed: false
 
             Component.onCompleted: {
                 contentColumn.completed = true
+                Qt.callLater(root.resizePanelToContent)
             }
 
             MixerSoundSection {
@@ -205,79 +214,6 @@ ColumnLayout {
                 model: mixerPanelModel
 
                 navigationRowStart: 1
-                needReadChannelName: prv.isPanelActivated
-
-                onNavigateControlIndexChanged: function(index) {
-                    prv.setNavigateControlIndex(index)
-                }
-            }
-
-            MixerFxSection {
-                id: fxSection
-
-                visible: contextMenuModel.audioFxSectionVisible
-                headerVisible: contextMenuModel.labelsSectionVisible
-                headerWidth: prv.headerWidth
-                channelItemWidth: prv.channelItemWidth
-
-                model: mixerPanelModel
-
-                navigationRowStart: 100
-                needReadChannelName: prv.isPanelActivated
-
-                onNavigateControlIndexChanged: function(index) {
-                    prv.setNavigateControlIndex(index)
-                }
-            }
-
-            MixerAuxSendsSection {
-                id: auxSendsSection
-
-                visible: contextMenuModel.auxSendsSectionVisible
-                headerVisible: contextMenuModel.labelsSectionVisible
-                headerWidth: prv.headerWidth
-
-                channelItemWidth: prv.channelItemWidth
-
-                model: mixerPanelModel
-
-                navigationRowStart: 200
-                needReadChannelName: prv.isPanelActivated
-
-                onNavigateControlIndexChanged: function(index) {
-                    prv.setNavigateControlIndex(index)
-                }
-            }
-
-            MixerBalanceSection {
-                id: balanceSection
-
-                visible: contextMenuModel.balanceSectionVisible
-                headerVisible: contextMenuModel.labelsSectionVisible
-                headerWidth: prv.headerWidth
-                channelItemWidth: prv.channelItemWidth
-
-                model: mixerPanelModel
-
-                navigationRowStart: 300
-                needReadChannelName: prv.isPanelActivated
-
-                onNavigateControlIndexChanged: function(index) {
-                    prv.setNavigateControlIndex(index)
-                }
-            }
-
-            MixerVolumeSection {
-                id: volumeSection
-
-                visible: contextMenuModel.volumeSectionVisible
-                headerVisible: contextMenuModel.labelsSectionVisible
-                headerWidth: prv.headerWidth
-                channelItemWidth: prv.channelItemWidth
-
-                model: mixerPanelModel
-
-                navigationRowStart: 400
                 needReadChannelName: prv.isPanelActivated
 
                 onNavigateControlIndexChanged: function(index) {
@@ -346,6 +282,7 @@ ColumnLayout {
     }
 
     Column {
+        id: scrollBarRow
         spacing: 0
         Layout.fillWidth: true
         visible: horizontalScrollBar.isScrollbarNeeded

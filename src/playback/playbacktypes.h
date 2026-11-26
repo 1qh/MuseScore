@@ -39,10 +39,7 @@ enum class MixerSectionType {
     Unknown,
     Labels,
     Sound,
-    AudioFX,
-    Balance,
-    Volume,
-    Fader,
+    Fader = 6,
     MuteAndSolo,
     Title
 };
@@ -52,9 +49,6 @@ inline QList<MixerSectionType> allMixerSectionTypes()
     static const QList<MixerSectionType> sections {
         MixerSectionType::Labels,
         MixerSectionType::Sound,
-        MixerSectionType::AudioFX,
-        MixerSectionType::Balance,
-        MixerSectionType::Volume,
         MixerSectionType::Fader,
         MixerSectionType::MuteAndSolo,
         MixerSectionType::Title
@@ -116,10 +110,4 @@ struct SoundProfile {
 };
 
 using SoundProfilesMap = std::map<SoundProfileName, SoundProfile>;
-
-enum OnlineSoundsShowProgressBarMode {
-    Always = 0,
-    DuringPlayback,
-    Never,
-};
 }

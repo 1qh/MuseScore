@@ -38,7 +38,7 @@ BaseSection {
 
         width: parent.width
 
-        text: qsTrc("preferences", "Use warmer instrument sound (MS Basic/SoundFont only)")
+        text: qsTrc("preferences", "Use warmer instrument sound (SoundFont only)")
 
         navigation.name: "UseSoundFontLowPassFilterCheckBox"
         navigation.panel: root.navigation

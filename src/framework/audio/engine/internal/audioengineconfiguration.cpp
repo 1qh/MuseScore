@@ -32,18 +32,6 @@ using namespace muse::audio;
 using namespace muse::audio::engine;
 using namespace muse::audio::rpc;
 
-static const AudioResourceId DEFAULT_SOUND_FONT_NAME = "MS Basic";
-static const AudioResourceAttributes DEFAULT_AUDIO_RESOURCE_ATTRIBUTES = {
-    { PLAYBACK_SETUP_DATA_ATTRIBUTE, muse::mpe::GENERIC_SETUP_DATA_STRING },
-    { synth::SOUNDFONT_NAME_ATTRIBUTE, String::fromStdString(DEFAULT_SOUND_FONT_NAME) } };
-
-static const AudioResourceMeta DEFAULT_AUDIO_RESOURCE_META = {
-    DEFAULT_SOUND_FONT_NAME,
-    "Fluid",
-    DEFAULT_AUDIO_RESOURCE_ATTRIBUTES,
-    AudioResourceType::FluidSoundfont,
-    false /*hasNativeEditor*/ };
-
 void AudioEngineConfiguration::setConfig(const AudioEngineConfig& conf)
 {
     ONLY_AUDIO_ENGINE_THREAD;
@@ -99,14 +87,6 @@ bool AudioEngineConfiguration::useSoundFontLowPassFilter() const
 async::Channel<bool> AudioEngineConfiguration::useSoundFontLowPassFilterChanged() const
 {
     return m_useSoundFontLowPassFilterChanged;
-}
-
-AudioInputParams AudioEngineConfiguration::defaultAudioInputParams() const
-{
-    AudioInputParams result;
-    result.resourceMeta = DEFAULT_AUDIO_RESOURCE_META;
-
-    return result;
 }
 
 size_t AudioEngineConfiguration::desiredAudioThreadNumber() const

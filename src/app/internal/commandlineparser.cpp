@@ -21,6 +21,8 @@
  */
 #include "commandlineparser.h"
 
+#include <cstdio>
+#include <cstdlib>
 #include <QDir>
 
 #include "global/io/dir.h"
@@ -148,10 +150,9 @@ void CommandLineParser::init()
     // Video export
 #ifdef MUE_BUILD_IMPEXP_VIDEOEXPORT_MODULE
     m_parser.addOption(QCommandLineOption("score-video", "Generate video for the given score and export it to file"));
-// not implemented
-//    m_parser.addOption(QCommandLineOption("view-mode",
-//                                          "View mode [paged-float, paged-original, paged-float-height, pano, auto]. Auto (default) will choose the best mode according to number of instruments etc... Will show piano for piano score only",
-//                                          "auto"));
+    m_parser.addOption(QCommandLineOption("view-mode",
+                                          "Video view mode [page-full, flexible, practice]. Default: page-full",
+                                          "mode"));
 // not implemented
 //    m_parser.addOption(QCommandLineOption("piano", "Show Piano, works only if one part and not auto or float modes"));
 //    m_parser.addOption(QCommandLineOption("piano-position", "Show Piano top or bottom. Default bottom", "bottom"));
@@ -196,6 +197,22 @@ void CommandLineParser::parse(int argc, char** argv)
 {
     QStringList args = prepareArguments(argc, argv);
     m_parser.parse(args);
+
+#ifdef MUE_BUILD_IMPEXP_VIDEOEXPORT_MODULE
+    if (m_parser.isSet("view-mode")) {
+        const QString mode = m_parser.value("view-mode");
+        if (mode == "page-full") {
+            m_options.exportVideo.viewMode = iex::videoexport::ViewMode::PageFull;
+        } else if (mode == "flexible") {
+            m_options.exportVideo.viewMode = iex::videoexport::ViewMode::Flexible;
+        } else if (mode == "practice") {
+            m_options.exportVideo.viewMode = iex::videoexport::ViewMode::Practice;
+        } else {
+            fprintf(stderr, "Unknown --view-mode '%s'. Accepted values: page-full, flexible, practice\n", qPrintable(mode));
+            exit(EXIT_FAILURE);
+        }
+    }
+#endif
 
     auto floatValue = [this](const QString& name) -> std::optional<float> {
         bool ok = true;
@@ -426,10 +443,6 @@ void CommandLineParser::parse(int argc, char** argv)
         m_options.converterTask.type = ConvertType::ExportScoreVideo;
         m_options.converterTask.inputFile = scorefiles[0];
         m_options.converterTask.outputFile = fromUserInputPath(m_parser.value("o"));
-
-        if (m_parser.isSet("view-mode")) {
-            NOT_IMPLEMENTED;
-        }
 
         if (m_parser.isSet("piano")) {
             NOT_IMPLEMENTED;

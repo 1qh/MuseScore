@@ -416,7 +416,7 @@ void TRowLabels::updateLabels(std::vector<std::pair<QString, bool> > labels, int
     std::pair<QGraphicsItem*, int> graphicsLineItemPair = std::make_pair(graphicsLineItem, numMetas);
     _metaLabels.push_back(graphicsLineItemPair);
 
-    setSceneRect(0, 0, maxWidth, _timeline->getHeight() + _timeline->horizontalScrollBar()->height());
+    setSceneRect(0, 0, maxWidth, _timeline->getHeight());
 
     std::tuple<QGraphicsPixmapItem*, MouseOverValue, unsigned> tmp(nullptr, MouseOverValue::NONE, -1);
     _oldItemInfo = tmp;
@@ -1000,7 +1000,7 @@ void Timeline::drawGrid(int globalRows, int globalCols, int startMeasure, int en
     }
 
     int stagger = 0;
-    setMinimumHeight(_gridHeight * (numMetas + 1) + 5 + horizontalScrollBar()->height());
+    setMinimumHeight(0);
     setMinimumWidth(_gridWidth * 3);
     _globalZValue = 1;
 

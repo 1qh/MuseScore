@@ -36,12 +36,40 @@ Item {
     property var navigationSection: null
     property int navigationOrderStart: 0
 
+    implicitWidth: measurementColumn.implicitWidth
+    implicitHeight: listView.count * rowSize.implicitHeight + Math.max(0, listView.count - 1) * listView.spacing
+    ListItemBlank {
+        id: rowSize
+        visible: false
+    }
+    Column {
+        id: measurementColumn
+        visible: false
+        Repeater {
+            model: undoHistoryModel
+            delegate: Item {
+                id: measurement
+                required property string text
+                required property int index
+                width: measuredText.implicitWidth + 12 + 16 + 6 + 12
+                height: rowSize.implicitHeight
+                StyledTextLabel {
+                    id: measuredText
+                    text: measurement.text
+                    font: measurement.index === undoHistoryModel.currentIndex ? ui.theme.bodyBoldFont
+                          : measurement.index > undoHistoryModel.currentIndex ? Qt.font(Object.assign({}, ui.theme.bodyFont, { italic: true }))
+                          : ui.theme.bodyFont
+                }
+            }
+        }
+    }
     StyledListView {
         id: listView
 
         objectName: "Undo/redo history"
 
         anchors.fill: parent
+        contentWidth: Math.max(width, root.implicitWidth)
 
         currentIndex: undoHistoryModel.currentIndex
 
@@ -58,6 +86,7 @@ Item {
             required property string text
             required property int index
 
+            width: listView.contentWidth
             readonly property bool isRedoable: index > undoHistoryModel.currentIndex
 
             isSelected: ListView.isCurrentItem

@@ -37,11 +37,9 @@ static constexpr QSize loadingScreenSize(800, 380);
 
 static const QColor messageColor("#F1F1EE");
 
-static const QString website("www.musescore.org");
 static constexpr QRectF websiteRect(loadingScreenSize.width() - 48, loadingScreenSize.height() - 48, 0, 0);
 
 static const QColor versionNumberColor("#19F3FF");
-static constexpr qreal versionNumberSpacing = 5.0;
 
 LoadingScreenView::LoadingScreenView(QWidget* parent)
     : QWidget(parent), muse::Contextable(muse::iocCtxForQWidget(this)),
@@ -80,15 +78,11 @@ void LoadingScreenView::draw(QPainter* painter)
 
     Qt::AlignmentFlag alignment = layoutDirection() == Qt::RightToLeft ? Qt::AlignLeft : Qt::AlignRight;
 
-    // Draw website URL
-    QRectF websiteBoundingRect;
-    painter->drawText(websiteRect, Qt::AlignBottom | alignment | Qt::TextDontClip, website, &websiteBoundingRect);
-
     // Draw version number
     pen.setColor(versionNumberColor);
     painter->setPen(pen);
 
-    painter->drawText(websiteRect.translated(0.0, -websiteBoundingRect.height() - versionNumberSpacing),
+    painter->drawText(websiteRect,
                       Qt::AlignBottom | alignment | Qt::TextDontClip,
                       muse::qtrc("appshell", "Version %1").arg(application()->fullVersion().toString()));
 }

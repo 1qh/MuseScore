@@ -20,11 +20,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "playbackcontroller.h"
+#include "rememberedinputslot.h"
 
 #include "async/notifylist.h"
 
 #include "modularity/ioc.h"
-#include "onlinesoundscontroller.h"
 
 #include "playbacktypes.h"
 
@@ -49,7 +49,6 @@ using namespace mu::engraving;
 using namespace mu::notation;
 using namespace mu::playback;
 
-static const muse::Uri NOTATION_REVIEW_PAGE_URI("musescore://notation/review");
 
 static const ActionCode PLAY_CODE("play");
 static const ActionCode PLAY_FROM_SELECTION("play-from-selection");
@@ -99,36 +98,8 @@ static std::string resolveAuxTrackTitle(aux_channel_idx_t index, const AudioOutp
     return muse::mtrc("playback", "Aux %1").arg(index + 1).toStdString();
 }
 
-std::vector<mu::playback::detail::EffectiveTrackSoloMuteState> mu::playback::detail::resolveEffectiveTrackSoloMuteStates(
-    const std::vector<InstrumentTrackSoloMuteState>& trackStates, bool playChordSymbols, bool isRangePlaybackMode,
-    const InstrumentTrackIdSet& allowedInstrumentTrackIds)
-{
-    bool hasSolo = false;
-    for (const auto& state : trackStates) {
-        if (!state.isMetronome && state.hasPlaybackTrack && state.soloMuteState.solo) { hasSolo = true; break; }
-    }
-    std::vector<EffectiveTrackSoloMuteState> result;
-    for (const auto& state : trackStates) {
-        if (!state.hasPlaybackTrack || state.isMetronome) continue;
-        bool shouldForceMute = hasSolo && !state.soloMuteState.solo;
-        if (state.isChordSymbols && !shouldForceMute) shouldForceMute = !playChordSymbols;
-        if (isRangePlaybackMode && !shouldForceMute) shouldForceMute = !muse::contains(allowedInstrumentTrackIds, state.instrumentTrackId);
-        result.push_back({ state.instrumentTrackId, state.soloMuteState, shouldForceMute });
-    }
-    return result;
-}
-
-InstrumentTrackIdSet mu::playback::detail::audibleInstrumentTrackIds(const std::vector<EffectiveTrackSoloMuteState>& trackStates)
-{
-    InstrumentTrackIdSet result;
-    for (const auto& state : trackStates) {
-        if (!state.soloMuteState.mute && !state.forceMute) result.insert(state.instrumentTrackId);
-    }
-    return result;
-}
-
 PlaybackController::PlaybackController(const muse::modularity::ContextPtr& iocCtx)
-    : muse::Contextable(iocCtx), m_drumsetLoader(iocCtx), m_onlineSoundsController(std::make_unique<OnlineSoundsController>(iocCtx))
+    : muse::Contextable(iocCtx), m_drumsetLoader(iocCtx)
 {
 }
 
@@ -156,8 +127,6 @@ void PlaybackController::init()
     dispatcher()->reg(this, PLAYBACK_SETUP, this, &PlaybackController::openPlaybackSetupDialog);
     dispatcher()->reg(this, TOGGLE_HEAR_PLAYBACK_WHEN_EDITING_CODE, this, &PlaybackController::toggleHearPlaybackWhenEditing);
     dispatcher()->reg(this, "playback-reload-cache", this, &PlaybackController::reloadPlaybackCache);
-
-    m_onlineSoundsController->regActions();
 
     globalContext()->currentNotationChanged().onNotify(this, [this]() {
         onNotationChanged();
@@ -312,11 +281,6 @@ InstrumentTrackIdSet PlaybackController::audibleInstrumentTrackIds() const
     return detail::audibleInstrumentTrackIds(effectiveTrackSoloMuteStates());
 }
 
-const IPlaybackController::AuxTrackIdMap& PlaybackController::auxTrackIdMap() const
-{
-    return m_auxTrackIdMap;
-}
-
 Channel<TrackId> PlaybackController::trackAdded() const
 {
     return m_trackAdded;
@@ -330,16 +294,6 @@ Channel<bool> PlaybackController::playbackInitedChanged() const
 Channel<TrackId> PlaybackController::trackRemoved() const
 {
     return m_trackRemoved;
-}
-
-std::string PlaybackController::auxChannelName(aux_channel_idx_t index) const
-{
-    return resolveAuxTrackTitle(index, audioSettings()->auxOutputParams(index));
-}
-
-Channel<aux_channel_idx_t, std::string> PlaybackController::auxChannelNameChanged() const
-{
-    return m_auxChannelNameChanged;
 }
 
 Promise<SoundPresetList> PlaybackController::availableSoundPresets(const InstrumentTrackId& instrumentTrackId) const
@@ -488,7 +442,7 @@ void PlaybackController::seekRangeSelection()
     seekRawTick(startTick);
 }
 
-void PlaybackController::onAudioResourceChanged(const TrackId trackId, const InstrumentTrackId& instrumentTrackId,
+void PlaybackController::onAudioResourceChanged(const TrackId /*trackId*/, const InstrumentTrackId& instrumentTrackId,
                                                 const AudioResourceMeta& oldMeta, const AudioResourceMeta& newMeta)
 {
     INotationPlaybackPtr notationPlayback = this->notationPlayback();
@@ -505,15 +459,6 @@ void PlaybackController::onAudioResourceChanged(const TrackId trackId, const Ins
     }
 
     notationPlayback->removeSoundFlags({ instrumentTrackId });
-
-    if (audio::isOnlineAudioResource(newMeta)) {
-        m_onlineSoundsController->addOnlineTrack(trackId, newMeta);
-        tours()->onEvent(u"online_sounds_added");
-        notationPlayback->setSendEventsOnScoreChange(instrumentTrackId, true);
-    } else if (audio::isOnlineAudioResource(oldMeta)) {
-        m_onlineSoundsController->removeOnlineTrack(trackId);
-        notationPlayback->setSendEventsOnScoreChange(instrumentTrackId, false);
-    }
 }
 
 bool PlaybackController::shouldLoadDrumset(const engraving::InstrumentTrackId& instrumentTrackId,
@@ -658,11 +603,6 @@ void PlaybackController::togglePlay(bool showErrors)
         return;
     }
 
-    if (showErrors && m_onlineSoundsController->shouldShowOnlineSoundsProcessingError(isPlaying())) {
-        m_onlineSoundsController->showOnlineSoundsProcessingError([this]() { togglePlay(false /*showErrors*/); });
-        return;
-    }
-
     interaction()->endEditElement();
 
     if (isPlaying()) {
@@ -689,11 +629,6 @@ void PlaybackController::togglePlay(bool showErrors)
 
 void PlaybackController::playFromSelection(bool showErrors)
 {
-    if (showErrors && m_onlineSoundsController->shouldShowOnlineSoundsProcessingError(isPlaying())) {
-        m_onlineSoundsController->showOnlineSoundsProcessingError([this]() { playFromSelection(false /*showErrors*/); });
-        return;
-    }
-
     int startTick = 0;
 
     if (!selection()->isNone()) {
@@ -826,11 +761,9 @@ void PlaybackController::onPlaybackStatusChanged()
     }
 
     bool playing = isPlaying();
-    const auto& onlineSounds = m_onlineSoundsController->onlineSounds();
 
     for (const auto& pair : m_instrumentTrackIdMap) {
-        bool shouldSendOnScoreChange = playing || muse::contains(onlineSounds, pair.second);
-        notationPlayback()->setSendEventsOnScoreChange(pair.first, shouldSendOnScoreChange);
+        notationPlayback()->setSendEventsOnScoreChange(pair.first, playing);
     }
 }
 
@@ -1103,8 +1036,6 @@ void PlaybackController::resetCurrentSequence()
 
     m_player = nullptr;
     globalContext()->setCurrentPlayer(nullptr);
-
-    m_onlineSoundsController->resetCurrentSequence();
 }
 
 void PlaybackController::addTrack(const InstrumentTrackId& instrumentTrackId, bool projectHadNoAudioSettings,
@@ -1163,13 +1094,8 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
     bool isMetronome = notationPlayback()->metronomeTrackId() == instrumentTrackId;
 
     if (!inParams.isValid()) {
-        if (isMetronome) {
-            const SoundProfile& profile = profilesRepo()->profile(configuration()->basicSoundProfileName());
-            inParams = { profile.findResource(playbackData.setupData), {} };
-        } else {
-            const SoundProfile& profile = profilesRepo()->profile(audioSettings()->activeSoundProfile());
-            inParams = { profile.findResource(playbackData.setupData), {} };
-        }
+        inParams = configuration()->rememberedTrackInputParams(
+            detail::rememberedInputSlot(instrumentTrackId, *notationPlayback(), *masterNotationParts()));
     }
 
     if (!isMetronome && outParams.auxSends.empty()) {
@@ -1195,8 +1121,10 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
         m_instrumentTrackIdMap.insert({ instrumentTrackId, trackId });
 
         const bool trackNewlyAdded = projectHadNoAudioSettings || !audioSettings()->trackHasExistingOutputParams(instrumentTrackId);
-        audioSettings()->setTrackInputParams(instrumentTrackId, appliedParams.in, !projectHadNoAudioSettings);
-        audioSettings()->setTrackOutputParams(instrumentTrackId, appliedParams.out, !projectHadNoAudioSettings);
+        //! NOTE What the engine applies while a track is added is no edit of the score, even where it differs from what
+        //! the score saved (a remembered pick, a sound no longer installed), so it never asks the owner to save on close
+        audioSettings()->setTrackInputParams(instrumentTrackId, appliedParams.in, false);
+        audioSettings()->setTrackOutputParams(instrumentTrackId, appliedParams.out, false);
 
         updateSoloMuteStates();
 
@@ -1211,14 +1139,6 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
         if (shouldLoadDrumset(instrumentTrackId, originMeta, appliedParams.in.resourceMeta)) {
             m_drumsetLoader.loadDrumset(m_notation, instrumentTrackId, appliedParams.in.resourceMeta);
         }
-
-        if (muse::audio::isOnlineAudioResource(appliedParams.in.resourceMeta)) {
-            m_onlineSoundsController->addOnlineTrack(trackId, appliedParams.in.resourceMeta);
-
-            if (notationPlayback()) {
-                notationPlayback()->setSendEventsOnScoreChange(instrumentTrackId, true);
-            }
-        }
     })
     .onReject(this, [instrumentTrackId, onFinished](int code, const std::string& msg) {
         LOGE() << "can't add a new track, code: [" << code << "] " << msg;
@@ -1229,7 +1149,7 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
     m_loadingTrackCount++;
 }
 
-void PlaybackController::addAuxTrack(aux_channel_idx_t index, bool projectHadNoAudioSettings, const TrackAddFinished& onFinished)
+void PlaybackController::addAuxTrack(aux_channel_idx_t index, const TrackAddFinished& onFinished)
 {
     IF_ASSERT_FAILED(notationPlayback() && playback()) {
         return;
@@ -1256,7 +1176,7 @@ void PlaybackController::addAuxTrack(aux_channel_idx_t index, bool projectHadNoA
 
         m_auxTrackIdMap.insert({ index, trackId });
 
-        audioSettings()->setAuxOutputParams(index, appliedParams, !projectHadNoAudioSettings);
+        audioSettings()->setAuxOutputParams(index, appliedParams, false);
 
         updateSoloMuteStates();
         onFinished();
@@ -1328,8 +1248,6 @@ void PlaybackController::removeTrack(const InstrumentTrackId& instrumentTrackId)
         }
     }
 
-    m_onlineSoundsController->removeOnlineTrack(search->second);
-
     m_trackRemoved.send(search->second);
     m_instrumentTrackIdMap.erase(instrumentTrackId);
 }
@@ -1356,7 +1274,6 @@ void PlaybackController::setupNewCurrentSequence(const TrackSequenceId sequenceI
     playback()->removeAllTracks(m_currentSequenceId);
 
     m_currentSequenceId = sequenceId;
-    m_onlineSoundsController->setCurrentSequence(sequenceId);
     m_player = playback()->player(sequenceId);
     globalContext()->setCurrentPlayer(m_player);
 
@@ -1393,6 +1310,12 @@ void PlaybackController::subscribeOnAudioParamsChanges()
             return pair.second == trackId;
         });
 
+        //! NOTE An invalid report is the engine falling back to silence for a sound it cannot find, never a pick: the score
+        //! keeps the pick it saved, so it plays again once the soundfont is back, and opening it marks nothing changed
+        if (!params.isValid()) {
+            return;
+        }
+
         if (search != m_instrumentTrackIdMap.end()) {
             const AudioResourceMeta& oldMeta = audioSettings()->trackInputParams(search->first).resourceMeta;
             onAudioResourceChanged(trackId, search->first, oldMeta, params.resourceMeta);
@@ -1424,14 +1347,7 @@ void PlaybackController::subscribeOnAudioParamsChanges()
 
         if (auxIt != m_auxTrackIdMap.end()) {
             aux_channel_idx_t auxIdx = auxIt->first;
-            std::string oldName = resolveAuxTrackTitle(auxIdx, audioSettings()->auxOutputParams(auxIdx));
-            std::string newName = resolveAuxTrackTitle(auxIdx, params);
-
             audioSettings()->setAuxOutputParams(auxIdx, params);
-
-            if (oldName != newName) {
-                m_auxChannelNameChanged.send(auxIdx, newName);
-            }
         }
     });
 }
@@ -1469,7 +1385,7 @@ void PlaybackController::setupSequenceTracks()
     }
 
     for (aux_channel_idx_t idx = 0; idx < AUX_CHANNEL_NUM; ++idx) {
-        addAuxTrack(idx, projectHadNoAudioSettings, onAddFinished);
+        addAuxTrack(idx, onAddFinished);
     }
 
     m_loadingProgress.progress(0, trackCount, title);
@@ -1823,9 +1739,7 @@ bool PlaybackController::canReceiveAction(const ActionCode& code) const
         return false;
     }
 
-    if (interactive()->currentUri().val == NOTATION_REVIEW_PAGE_URI) {
-        return false;
-    }
+
 
     static const std::unordered_set<ActionCode> REQUIRES_MEASURES {
         PLAY_CODE,
@@ -1844,21 +1758,6 @@ bool PlaybackController::canReceiveAction(const ActionCode& code) const
     }
 
     return true;
-}
-
-const std::map<TrackId, AudioResourceMeta>& PlaybackController::onlineSounds() const
-{
-    return m_onlineSoundsController->onlineSounds();
-}
-
-muse::async::Notification PlaybackController::onlineSoundsChanged() const
-{
-    return m_onlineSoundsController->onlineSoundsChanged();
-}
-
-muse::Progress PlaybackController::onlineSoundsProcessingProgress() const
-{
-    return m_onlineSoundsController->onlineSoundsProcessingProgress();
 }
 
 muse::audio::secs_t PlaybackController::playedTickToSecs(int tick) const

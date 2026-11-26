@@ -24,6 +24,7 @@
 #include "draw/painter.h"
 #include "dom/score.h"
 #include "dom/page.h"
+#include "dom/system.h"
 #include "dom/engravingitem.h"
 
 #include "tdraw.h"
@@ -146,13 +147,18 @@ void Paint::paintScore(Painter* painter, Score* score, const IScoreRenderer::Sco
             }
 
             std::vector<EngravingItem*> elements = page->items(drawRect.translated(-pagePos));
+            if (opt.onlySystem) {
+                elements.erase(std::remove_if(elements.begin(), elements.end(), [&opt](const EngravingItem* item) {
+                    return item->findAncestor(ElementType::SYSTEM) != opt.onlySystem;
+                }), elements.end());
+            }
             paintItems(*painter, elements, opt);
 
             if (disableClipping) {
                 painter->setClipping(false);
             }
 
-            if (!opt.isPrinting) {
+            if (!opt.isPrinting && !opt.onlySystem) {
                 DebugPaint::paintPageDebug(*painter, page, elements);
             }
 

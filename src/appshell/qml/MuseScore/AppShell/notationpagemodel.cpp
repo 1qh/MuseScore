@@ -21,6 +21,8 @@
  */
 #include "notationpagemodel.h"
 
+#include "engraving/dom/masterscore.h"
+
 #include "internal/applicationuiactions.h"
 #include "dockwindow/idockwindow.h"
 
@@ -72,6 +74,24 @@ void NotationPageModel::init()
 
     extensionsProvider()->manifestChanged().onReceive(this, [this](const muse::extensions::Manifest&) {
         scheduleUpdateExtensionsToolBarVisibility();
+    });
+
+    // The piano keyboard shows while the score plays and leaves the sheet alone otherwise, but a keyboard the owner
+    // opened stays open: playback closes only the keyboard it opened itself
+    playbackController()->isPlayingChanged().onNotify(this, [this]() {
+        const muse::dock::IDockWindow* window = dockWindowProvider()->window();
+        const bool open = window && window->isDockOpen(PIANO_KEYBOARD_PANEL_NAME);
+        if (playbackController()->isPlaying()) {
+            m_keyboardOpenedByPlayback = !open;
+            if (!open) {
+                dispatcher()->dispatch("dock-set-open", ActionData::make_arg2<QString, bool>(PIANO_KEYBOARD_PANEL_NAME, true));
+            }
+            return;
+        }
+        if (m_keyboardOpenedByPlayback && open) {
+            dispatcher()->dispatch("dock-set-open", ActionData::make_arg2<QString, bool>(PIANO_KEYBOARD_PANEL_NAME, false));
+        }
+        m_keyboardOpenedByPlayback = false;
     });
 
     brailleConfiguration()->braillePanelEnabledChanged().onNotify(this, [this]() {
@@ -156,6 +176,11 @@ QString NotationPageModel::pianoKeyboardPanelName() const
     return PIANO_KEYBOARD_PANEL_NAME;
 }
 
+QString NotationPageModel::navigatorPanelName() const
+{
+    return NOTATION_NAVIGATOR_PANEL_NAME;
+}
+
 QString NotationPageModel::timelinePanelName() const
 {
     return TIMELINE_PANEL_NAME;
@@ -183,6 +208,17 @@ void NotationPageModel::onNotationChanged()
         return;
     }
 
+    // A reader sees the sheet as it prints: invisible elements and layout marks start hidden, once per score, without
+    // marking the score changed; View > Show brings them back
+    if (IMasterNotationPtr master = globalContext()->currentMasterNotation()) {
+        engraving::MasterScore* score = master->masterScore();
+        if (score && m_readerViewScores.insert(score).second) {
+            score->setShowInvisible(false);
+            score->setShowUnprintable(false);
+            score->update();
+        }
+    }
+
     INotationNoteInputPtr noteInput = notation->interaction()->noteInput();
     noteInput->stateChanged().onNotify(this, [this]() {
         scheduleUpdateDrumsetPanelVisibility();
@@ -198,12 +234,6 @@ void NotationPageModel::onNotationChanged()
 
 void NotationPageModel::toggleDock(const QString& name)
 {
-    if (name == NOTATION_NAVIGATOR_PANEL_NAME) {
-        configuration()->setIsNotationNavigatorVisible(!isNavigatorVisible());
-        emit isNavigatorVisibleChanged();
-        return;
-    }
-
     if (name == NOTATION_BRAILLE_PANEL_NAME) {
         brailleConfiguration()->setBraillePanelEnabled(!isBraillePanelVisible());
         emit isBraillePanelVisibleChanged();
