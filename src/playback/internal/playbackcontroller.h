@@ -45,6 +45,24 @@
 
 namespace mu::playback {
 class OnlineSoundsController;
+namespace detail {
+struct InstrumentTrackSoloMuteState {
+    engraving::InstrumentTrackId instrumentTrackId;
+    IPlaybackController::SoloMuteState soloMuteState;
+    bool hasPlaybackTrack = false;
+    bool isMetronome = false;
+    bool isChordSymbols = false;
+};
+struct EffectiveTrackSoloMuteState {
+    engraving::InstrumentTrackId instrumentTrackId;
+    IPlaybackController::SoloMuteState soloMuteState;
+    bool forceMute = false;
+};
+std::vector<EffectiveTrackSoloMuteState> resolveEffectiveTrackSoloMuteStates(
+    const std::vector<InstrumentTrackSoloMuteState>& trackStates, bool playChordSymbols, bool isRangePlaybackMode,
+    const engraving::InstrumentTrackIdSet& allowedInstrumentTrackIds);
+engraving::InstrumentTrackIdSet audibleInstrumentTrackIds(const std::vector<EffectiveTrackSoloMuteState>& trackStates);
+}
 class PlaybackController : public IPlaybackController, public muse::actions::Actionable, public muse::async::Asyncable,
     public muse::Contextable
 {
@@ -77,10 +95,12 @@ public:
     muse::async::Notification currentTrackSequenceIdChanged() const override;
 
     const InstrumentTrackIdMap& instrumentTrackIdMap() const override;
+    engraving::InstrumentTrackIdSet audibleInstrumentTrackIds() const override;
     const AuxTrackIdMap& auxTrackIdMap() const override;
 
     muse::async::Channel<muse::audio::TrackId> trackAdded() const override;
     muse::async::Channel<muse::audio::TrackId> trackRemoved() const override;
+    muse::async::Channel<bool> playbackInitedChanged() const override;
 
     std::string auxChannelName(muse::audio::aux_channel_idx_t index) const override;
     muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> auxChannelNameChanged() const override;
@@ -180,6 +200,7 @@ private:
     muse::audio::secs_t playbackStartSecs() const;
 
     notation::InstrumentTrackIdSet instrumentTrackIdSetForRangePlayback() const;
+    std::vector<detail::EffectiveTrackSoloMuteState> effectiveTrackSoloMuteStates() const;
 
     void togglePlayRepeats();
     void togglePlayChordSymbols();
@@ -250,6 +271,7 @@ private:
 
     muse::async::Channel<muse::audio::TrackId> m_trackAdded;
     muse::async::Channel<muse::audio::TrackId> m_trackRemoved;
+    muse::async::Channel<bool> m_playbackInitedChanged;
 
     muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> m_auxChannelNameChanged;
 

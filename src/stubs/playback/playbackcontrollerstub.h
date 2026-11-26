@@ -42,10 +42,12 @@ public:
     muse::async::Notification currentTrackSequenceIdChanged() const override;
 
     const InstrumentTrackIdMap& instrumentTrackIdMap() const override;
+    engraving::InstrumentTrackIdSet audibleInstrumentTrackIds() const override;
     const AuxTrackIdMap& auxTrackIdMap() const override;
 
     muse::async::Channel<muse::audio::TrackId> trackAdded() const override;
     muse::async::Channel<muse::audio::TrackId> trackRemoved() const override;
+    muse::async::Channel<bool> playbackInitedChanged() const override;
 
     std::string auxChannelName(muse::audio::aux_channel_idx_t index) const override;
     muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> auxChannelNameChanged() const override;

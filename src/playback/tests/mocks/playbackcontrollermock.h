@@ -44,11 +44,13 @@ public:
     MOCK_METHOD(muse::async::Notification, currentTrackSequenceIdChanged, (), (const, override));
 
     MOCK_METHOD(const InstrumentTrackIdMap&, instrumentTrackIdMap, (), (const, override));
+    MOCK_METHOD(engraving::InstrumentTrackIdSet, audibleInstrumentTrackIds, (), (const, override));
 
     MOCK_METHOD(const AuxTrackIdMap&, auxTrackIdMap, (), (const, override));
 
     MOCK_METHOD(muse::async::Channel<muse::audio::TrackId>, trackAdded, (), (const, override));
     MOCK_METHOD(muse::async::Channel<muse::audio::TrackId>, trackRemoved, (), (const, override));
+    MOCK_METHOD(muse::async::Channel<bool>, playbackInitedChanged, (), (const, override));
 
     MOCK_METHOD(std::string, auxChannelName, (muse::audio::aux_channel_idx_t), (const, override));
     MOCK_METHOD((muse::async::Channel<muse::audio::aux_channel_idx_t, std::string>), auxChannelNameChanged, (), (const, override));

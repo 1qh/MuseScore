@@ -58,12 +58,14 @@ public:
 
     using InstrumentTrackIdMap = std::unordered_map<engraving::InstrumentTrackId, muse::audio::TrackId>;
     virtual const InstrumentTrackIdMap& instrumentTrackIdMap() const = 0;
+    virtual engraving::InstrumentTrackIdSet audibleInstrumentTrackIds() const = 0;
 
     using AuxTrackIdMap = std::map<muse::audio::aux_channel_idx_t, muse::audio::TrackId>;
     virtual const AuxTrackIdMap& auxTrackIdMap() const = 0;
 
     virtual muse::async::Channel<muse::audio::TrackId> trackAdded() const = 0;
     virtual muse::async::Channel<muse::audio::TrackId> trackRemoved() const = 0;
+    virtual muse::async::Channel<bool> playbackInitedChanged() const = 0;
 
     virtual std::string auxChannelName(muse::audio::aux_channel_idx_t index) const = 0;
     virtual muse::async::Channel<muse::audio::aux_channel_idx_t, std::string> auxChannelNameChanged() const = 0;

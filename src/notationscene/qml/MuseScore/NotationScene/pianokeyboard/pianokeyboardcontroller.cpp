@@ -21,8 +21,10 @@
  */
 #include "pianokeyboardcontroller.h"
 
-#include "defer.h"
 #include "log.h"
+
+#include "notation/imasternotation.h"
+#include "notation/inotationsolomutestate.h"
 
 using namespace mu::notation;
 using namespace muse::midi;
@@ -30,16 +32,72 @@ using namespace muse::midi;
 PianoKeyboardController::PianoKeyboardController(const muse::modularity::ContextPtr& iocCtx)
     : muse::Contextable(iocCtx)
 {
+}
+
+void PianoKeyboardController::init()
+{
+    if (m_isInitialized) {
+        return;
+    }
+    m_isInitialized = true;
     onNotationChanged();
 
-    context()->currentNotationChanged().onNotify(this, [this]() {
+    auto globalContext = context();
+    if (!globalContext) {
+        return;
+    }
+    globalContext->currentNotationChanged().onNotify(this, [this]() {
         onNotationChanged();
     });
+
+    globalContext->currentMasterNotationChanged().onNotify(this, [this]() { onMasterNotationChanged(); });
+    auto playbackState = globalContext->playbackState();
+    if (!playbackState) {
+        return;
+    }
+    playbackState->playbackStatusChanged().onReceive(this, [this](muse::audio::PlaybackStatus status) {
+        onPlaybackStatusChanged(status);
+    });
+    playbackState->playbackPositionChanged().onReceive(this, [this](muse::audio::secs_t position) {
+        onPlaybackPositionChanged(position);
+    });
+    auto controller = playbackController();
+    if (controller) {
+        controller->playbackInitedChanged().onReceive(this, [this](bool) { refreshPlaybackKeys(); });
+        controller->trackAdded().onReceive(this, [this](muse::audio::TrackId) { refreshPlaybackKeys(); });
+        controller->trackRemoved().onReceive(this, [this](muse::audio::TrackId) { refreshPlaybackKeys(); });
+    }
+    auto configuration = notationConfiguration();
+    if (configuration) {
+        configuration->isPlayChordSymbolsChanged().onNotify(this, [this]() { refreshPlaybackKeys(); });
+    }
+    onPlaybackStatusChanged(playbackState->playbackStatus());
+}
+
+void PianoKeyboardController::setPlaybackTrackingEnabled(bool enabled)
+{
+    if (m_isPlaybackTrackingEnabled == enabled) {
+        return;
+    }
+    m_isPlaybackTrackingEnabled = enabled;
+    if (!enabled) {
+        replacePlaybackKeys({});
+        m_lastPlaybackPosition.reset();
+        return;
+    }
+    if (!m_isInitialized || m_playbackStatus != muse::audio::PlaybackStatus::Running || m_isWaitingForCountIn) {
+        return;
+    }
+    auto globalContext = context();
+    auto playbackState = globalContext ? globalContext->playbackState() : nullptr;
+    if (playbackState) {
+        updatePlaybackKeys(playbackState->playbackPosition(), true);
+    }
 }
 
 KeyState PianoKeyboardController::keyState(piano_key_t key) const
 {
-    if (m_pressedKey == key) {
+    if (m_pressedKey == key || m_playbackKeys.find(key) != m_playbackKeys.cend()) {
         return KeyState::Played;
     }
 
@@ -107,6 +165,12 @@ void PianoKeyboardController::setHoveredKey(std::optional<piano_key_t> key)
 
 void PianoKeyboardController::onNotationChanged()
 {
+    m_notation = currentNotation();
+    if (m_notation) {
+        m_notation->soloMuteState()->trackSoloMuteStateChanged().onReceive(this, [this](const engraving::InstrumentTrackId&, const INotationSoloMuteState::SoloMuteState&) {
+            refreshPlaybackKeys();
+        });
+    }
     if (auto notation = currentNotation()) {
         notation->interaction()->selectionChanged().onNotify(this, [this]() {
             auto notation = currentNotation();
@@ -116,6 +180,8 @@ void PianoKeyboardController::onNotationChanged()
 
             auto selection = notation->interaction()->selection();
             if (selection->isNone()) {
+                updateNotesKeys({}, false);
+                refreshPlaybackKeys();
                 return;
             }
 
@@ -124,31 +190,20 @@ void PianoKeyboardController::onNotationChanged()
                 notes.push_back(note);
             }
 
-            m_isFromMidi = false;
-            updateNotesKeys(notes);
+            updateNotesKeys(notes, false);
+            refreshPlaybackKeys();
         }, Asyncable::Mode::SetReplace /* FIXME */);
 
         notation->midiInput()->notesReceived().onReceive(this, [this](const std::vector<const Note*>& notes) {
-            m_isFromMidi = true;
-            updateNotesKeys(notes);
+            updateNotesKeys(notes, true);
         }, Asyncable::Mode::SetReplace /* FIXME */);
     }
 }
 
-void PianoKeyboardController::updateNotesKeys(const std::vector<const Note*>& receivedNotes)
+void PianoKeyboardController::updateNotesKeys(const std::vector<const Note*>& receivedNotes, bool isFromMidi)
 {
     std::unordered_set<piano_key_t> newKeys;
     std::unordered_set<piano_key_t> newOtherNotesInChord;
-
-    DEFER {
-        if (newKeys != m_keys
-            || newOtherNotesInChord != m_otherNotesInChord) {
-            m_keys = newKeys;
-            m_otherNotesInChord = newOtherNotesInChord;
-        }
-
-        m_keyStatesChanged.notify();
-    };
 
     const bool useWrittenPitch = notationConfiguration()->midiUseWrittenPitch().val;
 
@@ -158,6 +213,88 @@ void PianoKeyboardController::updateNotesKeys(const std::vector<const Note*>& re
             newOtherNotesInChord.insert(static_cast<piano_key_t>(useWrittenPitch ? otherNote->epitch() : otherNote->ppitch()));
         }
     }
+
+    if (newKeys == m_keys && newOtherNotesInChord == m_otherNotesInChord && isFromMidi == m_isFromMidi) {
+        return;
+    }
+    m_keys = std::move(newKeys);
+    m_otherNotesInChord = std::move(newOtherNotesInChord);
+    m_isFromMidi = isFromMidi;
+    m_keyStatesChanged.notify();
+}
+
+void PianoKeyboardController::onMasterNotationChanged()
+{
+    m_lastPlaybackPosition.reset();
+    m_audibleInstrumentTrackIds.reset();
+    refreshPlaybackKeys();
+}
+
+void PianoKeyboardController::onPlaybackStatusChanged(muse::audio::PlaybackStatus status)
+{
+    if (m_playbackStatus == status) return;
+    m_playbackStatus = status;
+    m_lastPlaybackPosition.reset();
+    m_audibleInstrumentTrackIds.reset();
+    if (status != muse::audio::PlaybackStatus::Running) {
+        m_isWaitingForCountIn = false;
+        m_countInStartPosition.reset();
+        if (replacePlaybackKeys({}) && m_isPlaybackTrackingEnabled) m_keyStatesChanged.notify();
+        return;
+    }
+    auto configuration = notationConfiguration();
+    m_isWaitingForCountIn = configuration && configuration->isCountInEnabled();
+    auto globalContext = context();
+    auto playbackState = globalContext ? globalContext->playbackState() : nullptr;
+    if (m_isWaitingForCountIn && playbackState) m_countInStartPosition = playbackState->playbackPosition();
+    if (replacePlaybackKeys({}) && m_isPlaybackTrackingEnabled) m_keyStatesChanged.notify();
+    if (!m_isWaitingForCountIn && m_isPlaybackTrackingEnabled && playbackState) updatePlaybackKeys(playbackState->playbackPosition(), true);
+}
+
+void PianoKeyboardController::onPlaybackPositionChanged(muse::audio::secs_t position)
+{
+    if (m_playbackStatus != muse::audio::PlaybackStatus::Running) return;
+    if (m_isWaitingForCountIn) {
+        if (m_countInStartPosition == position) return;
+        m_isWaitingForCountIn = false;
+        m_countInStartPosition.reset();
+        m_lastPlaybackPosition.reset();
+    }
+    updatePlaybackKeys(position);
+}
+
+void PianoKeyboardController::refreshPlaybackKeys()
+{
+    m_audibleInstrumentTrackIds.reset();
+    if (!m_isPlaybackTrackingEnabled || m_playbackStatus != muse::audio::PlaybackStatus::Running || m_isWaitingForCountIn) return;
+    auto globalContext = context();
+    auto playbackState = globalContext ? globalContext->playbackState() : nullptr;
+    if (playbackState) updatePlaybackKeys(playbackState->playbackPosition(), true);
+}
+
+void PianoKeyboardController::updatePlaybackKeys(muse::audio::secs_t position, bool force)
+{
+    if (!m_isPlaybackTrackingEnabled || m_playbackStatus != muse::audio::PlaybackStatus::Running || m_isWaitingForCountIn
+        || (!force && m_lastPlaybackPosition == position)) return;
+    m_lastPlaybackPosition = position;
+    auto globalContext = context();
+    auto masterNotation = globalContext ? globalContext->currentMasterNotation() : nullptr;
+    auto notationPlayback = masterNotation ? masterNotation->playback() : nullptr;
+    auto controller = playbackController();
+    std::unordered_set<piano_key_t> playbackKeys;
+    if (notationPlayback && controller) {
+        if (!m_audibleInstrumentTrackIds) m_audibleInstrumentTrackIds = controller->audibleInstrumentTrackIds();
+        const auto pitches = notationPlayback->activePlaybackPitches(position, *m_audibleInstrumentTrackIds);
+        playbackKeys.insert(pitches.cbegin(), pitches.cend());
+    }
+    if (replacePlaybackKeys(std::move(playbackKeys))) m_keyStatesChanged.notify();
+}
+
+bool PianoKeyboardController::replacePlaybackKeys(std::unordered_set<piano_key_t> keys)
+{
+    if (m_playbackKeys == keys) return false;
+    m_playbackKeys = std::move(keys);
+    return true;
 }
 
 void PianoKeyboardController::sendNoteOn(piano_key_t key)
@@ -193,5 +330,6 @@ void PianoKeyboardController::sendNoteOff(piano_key_t key)
 
 INotationPtr PianoKeyboardController::currentNotation() const
 {
-    return context()->currentNotation();
+    auto globalContext = context();
+    return globalContext ? globalContext->currentNotation() : nullptr;
 }

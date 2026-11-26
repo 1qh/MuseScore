@@ -69,10 +69,20 @@ const IPlaybackController::InstrumentTrackIdMap& PlaybackControllerStub::instrum
     return m;
 }
 
+engraving::InstrumentTrackIdSet PlaybackControllerStub::audibleInstrumentTrackIds() const
+{
+    return {};
+}
+
 const IPlaybackController::AuxTrackIdMap& PlaybackControllerStub::auxTrackIdMap() const
 {
     static const AuxTrackIdMap m;
     return m;
+}
+
+muse::async::Channel<bool> PlaybackControllerStub::playbackInitedChanged() const
+{
+    return {};
 }
 
 muse::async::Channel<muse::audio::TrackId> PlaybackControllerStub::trackAdded() const

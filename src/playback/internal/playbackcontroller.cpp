@@ -99,6 +99,34 @@ static std::string resolveAuxTrackTitle(aux_channel_idx_t index, const AudioOutp
     return muse::mtrc("playback", "Aux %1").arg(index + 1).toStdString();
 }
 
+std::vector<mu::playback::detail::EffectiveTrackSoloMuteState> mu::playback::detail::resolveEffectiveTrackSoloMuteStates(
+    const std::vector<InstrumentTrackSoloMuteState>& trackStates, bool playChordSymbols, bool isRangePlaybackMode,
+    const InstrumentTrackIdSet& allowedInstrumentTrackIds)
+{
+    bool hasSolo = false;
+    for (const auto& state : trackStates) {
+        if (!state.isMetronome && state.hasPlaybackTrack && state.soloMuteState.solo) { hasSolo = true; break; }
+    }
+    std::vector<EffectiveTrackSoloMuteState> result;
+    for (const auto& state : trackStates) {
+        if (!state.hasPlaybackTrack || state.isMetronome) continue;
+        bool shouldForceMute = hasSolo && !state.soloMuteState.solo;
+        if (state.isChordSymbols && !shouldForceMute) shouldForceMute = !playChordSymbols;
+        if (isRangePlaybackMode && !shouldForceMute) shouldForceMute = !muse::contains(allowedInstrumentTrackIds, state.instrumentTrackId);
+        result.push_back({ state.instrumentTrackId, state.soloMuteState, shouldForceMute });
+    }
+    return result;
+}
+
+InstrumentTrackIdSet mu::playback::detail::audibleInstrumentTrackIds(const std::vector<EffectiveTrackSoloMuteState>& trackStates)
+{
+    InstrumentTrackIdSet result;
+    for (const auto& state : trackStates) {
+        if (!state.soloMuteState.mute && !state.forceMute) result.insert(state.instrumentTrackId);
+    }
+    return result;
+}
+
 PlaybackController::PlaybackController(const muse::modularity::ContextPtr& iocCtx)
     : muse::Contextable(iocCtx), m_drumsetLoader(iocCtx), m_onlineSoundsController(std::make_unique<OnlineSoundsController>(iocCtx))
 {
@@ -279,6 +307,11 @@ const IPlaybackController::InstrumentTrackIdMap& PlaybackController::instrumentT
     return m_instrumentTrackIdMap;
 }
 
+InstrumentTrackIdSet PlaybackController::audibleInstrumentTrackIds() const
+{
+    return detail::audibleInstrumentTrackIds(effectiveTrackSoloMuteStates());
+}
+
 const IPlaybackController::AuxTrackIdMap& PlaybackController::auxTrackIdMap() const
 {
     return m_auxTrackIdMap;
@@ -287,6 +320,11 @@ const IPlaybackController::AuxTrackIdMap& PlaybackController::auxTrackIdMap() co
 Channel<TrackId> PlaybackController::trackAdded() const
 {
     return m_trackAdded;
+}
+
+Channel<bool> PlaybackController::playbackInitedChanged() const
+{
+    return m_playbackInitedChanged;
 }
 
 Channel<TrackId> PlaybackController::trackRemoved() const
@@ -1334,6 +1372,7 @@ void PlaybackController::setupNewCurrentSequence(const TrackSequenceId sequenceI
     setupSequencePlayer();
 
     m_currentSequenceIdChanged.notify();
+    m_playbackInitedChanged.send(true);
 }
 
 void PlaybackController::subscribeOnAudioParamsChanges()
@@ -1502,55 +1541,39 @@ void PlaybackController::updateSoloMuteStates()
 
     TRACEFUNC;
 
-    InstrumentTrackIdSet existingTrackIdSet = notationPlayback()->existingTrackIdSet();
-    bool hasSolo = false;
-
-    for (const InstrumentTrackId& instrumentTrackId : existingTrackIdSet) {
-        if (instrumentTrackId == notationPlayback()->metronomeTrackId()) {
-            continue;
-        }
-        if (m_notation->soloMuteState()->trackSoloMuteState(instrumentTrackId).solo) {
-            hasSolo = true;
-            break;
-        }
-    }
-
-    InstrumentTrackIdSet allowedInstrumentTrackIdSet = instrumentTrackIdSetForRangePlayback();
-    bool isRangePlaybackMode = !m_isExportingAudio && selection()->isRange() && !allowedInstrumentTrackIdSet.empty();
-
-    for (const InstrumentTrackId& instrumentTrackId : existingTrackIdSet) {
-        if (!muse::contains(m_instrumentTrackIdMap, instrumentTrackId)) {
-            continue;
-        }
-
-        if (instrumentTrackId == notationPlayback()->metronomeTrackId()) {
-            continue;
-        }
-
-        // 1. Recall the solo-mute state for this notation
-        const auto& soloMuteState = m_notation->soloMuteState()->trackSoloMuteState(instrumentTrackId);
-
-        // 2. Evaluate "force mute" (disabling the mute button)
-        bool shouldForceMute = hasSolo && !soloMuteState.solo;
-        if (notationPlayback()->isChordSymbolsTrack(instrumentTrackId) && !shouldForceMute) {
-            shouldForceMute = !notationConfiguration()->isPlayChordSymbolsEnabled();
-        }
-
-        if (isRangePlaybackMode && !shouldForceMute) {
-            shouldForceMute = !muse::contains(allowedInstrumentTrackIdSet, instrumentTrackId);
-        }
-
-        // 3. Update params for playback / mixer
+    const auto states = effectiveTrackSoloMuteStates();
+    for (const auto& state : states) {
+        const InstrumentTrackId& instrumentTrackId = state.instrumentTrackId;
         AudioOutputParams params = trackOutputParams(instrumentTrackId);
-        params.solo = soloMuteState.solo;
-        params.muted = soloMuteState.mute || shouldForceMute;
-        params.forceMute = shouldForceMute;
-
+        params.solo = state.soloMuteState.solo;
+        params.muted = state.soloMuteState.mute || state.forceMute;
+        params.forceMute = state.forceMute;
         audio::TrackId trackId = m_instrumentTrackIdMap.at(instrumentTrackId);
         playback()->setOutputParams(m_currentSequenceId, trackId, std::move(params));
     }
 
     updateAuxMuteStates();
+}
+
+std::vector<detail::EffectiveTrackSoloMuteState> PlaybackController::effectiveTrackSoloMuteStates() const
+{
+    if (!m_notation || !notationPlayback()) return {};
+    InstrumentTrackIdSet existingTrackIdSet = notationPlayback()->existingTrackIdSet();
+    const InstrumentTrackId metronomeTrackId = notationPlayback()->metronomeTrackId();
+    std::vector<detail::InstrumentTrackSoloMuteState> trackStates;
+    trackStates.reserve(existingTrackIdSet.size());
+    for (const InstrumentTrackId& instrumentTrackId : existingTrackIdSet) {
+        const bool isMetronome = instrumentTrackId == metronomeTrackId;
+        const bool hasPlaybackTrack = muse::contains(m_instrumentTrackIdMap, instrumentTrackId);
+        const bool isChordSymbols = hasPlaybackTrack && !isMetronome && notationPlayback()->isChordSymbolsTrack(instrumentTrackId);
+        SoloMuteState soloMuteState;
+        if (!isMetronome) soloMuteState = m_notation->soloMuteState()->trackSoloMuteState(instrumentTrackId);
+        trackStates.push_back({ instrumentTrackId, soloMuteState, hasPlaybackTrack, isMetronome, isChordSymbols });
+    }
+    InstrumentTrackIdSet allowedInstrumentTrackIdSet = instrumentTrackIdSetForRangePlayback();
+    bool isRangePlaybackMode = !m_isExportingAudio && selection()->isRange() && !allowedInstrumentTrackIdSet.empty();
+    return detail::resolveEffectiveTrackSoloMuteStates(trackStates, notationConfiguration()->isPlayChordSymbolsEnabled(),
+                                                       isRangePlaybackMode, allowedInstrumentTrackIdSet);
 }
 
 void PlaybackController::updateAuxMuteStates()
