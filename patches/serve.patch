@@ -1,0 +1,189 @@
+diff --git a/src/app/CMakeLists.txt b/src/app/CMakeLists.txt
+index 169be219..48a9fa1c 100644
+--- a/src/app/CMakeLists.txt
++++ b/src/app/CMakeLists.txt
+@@ -231,6 +231,13 @@ if (CC_IS_EMCC)
+     set(APP_SRC ${APP_SRC} webapi_export.cpp)
+ endif()
+ 
++if (OS_IS_MAC)
++    set(APP_SRC ${APP_SRC}
++        internal/platform/macos/macosbackground.h
++        internal/platform/macos/macosbackground.mm
++    )
++endif()
++
+ qt_add_executable(MuseScoreStudio
+     WIN32 MACOSX_BUNDLE
+     ${APP_RCC_SOURCES}
+diff --git a/src/app/cmdoptions.h b/src/app/cmdoptions.h
+index 87ed9bdd..1f0f9a62 100644
+--- a/src/app/cmdoptions.h
++++ b/src/app/cmdoptions.h
+@@ -12,6 +12,7 @@ namespace mu::app {
+ enum class ConvertType {
+     File,
+     Batch,
++    Serve,
+     ConvertScoreParts,
+     ExportScoreMedia,
+     ExportScoreMeta,
+diff --git a/src/app/internal/commandlineparser.cpp b/src/app/internal/commandlineparser.cpp
+index 57dada0d..0264e3f9 100644
+--- a/src/app/internal/commandlineparser.cpp
++++ b/src/app/internal/commandlineparser.cpp
+@@ -89,6 +89,9 @@ void CommandLineParser::init()
+     m_parser.addOption(QCommandLineOption({ "r", "image-resolution" }, "Set output resolution for image export", "DPI"));
+     m_parser.addOption(QCommandLineOption({ "o", "export-to" }, "Export to 'file'. Format depends on file's extension", "file"));
+     m_parser.addOption(QCommandLineOption({ "j", "job" }, "Process a conversion job", "file"));
++    m_parser.addOption(QCommandLineOption("serve",
++                                          "Stay running and process 1 conversion job per line of standard input: "
++                                          "{\"id\", \"job\", \"extension\", \"style\"}"));
+     m_parser.addOption(QCommandLineOption("extension", "Use extension to process a conversion job", "uri"));
+ 
+     m_parser.addOption(QCommandLineOption({ "F", "factory-settings" }, "Use factory settings"));
+@@ -347,6 +350,11 @@ void CommandLineParser::parse(int argc, char** argv)
+         m_options.converterTask.inputFile = fromUserInputPath(m_parser.value("j"));
+     }
+ 
++    if (m_parser.isSet("serve")) {
++        m_options.runMode = IApplication::RunMode::ConsoleApp;
++        m_options.converterTask.type = ConvertType::Serve;
++    }
++
+     if (m_parser.isSet("score-media")) {
+         m_options.runMode = IApplication::RunMode::ConsoleApp;
+         m_options.converterTask.type = ConvertType::ExportScoreMedia;
+diff --git a/src/app/internal/consoleapp.cpp b/src/app/internal/consoleapp.cpp
+index d6e360d2..21d481d9 100644
+--- a/src/app/internal/consoleapp.cpp
++++ b/src/app/internal/consoleapp.cpp
+@@ -25,6 +25,11 @@
+ #include <QApplication>
+ #ifndef Q_OS_WASM
+ #include <QThreadPool>
++#include <QJsonDocument>
++#include <QJsonObject>
++
++#include <iostream>
++#include <string>
+ #endif
+ 
+ #include "modularity/ioc.h"
+@@ -446,6 +451,20 @@ int ConsoleApp::processConverter(const CmdOptions::ConverterTask& task)
+     case ConvertType::Batch:
+         ret = converter()->batchConvert(task.inputFile, openParams, soundProfile, extensionUri);
+         break;
++    case ConvertType::Serve: {
++        std::string line;
++        while (std::getline(std::cin, line)) {
++            const QJsonObject request = QJsonDocument::fromJson(QByteArray::fromStdString(line)).object();
++            converter::OpenParams params = openParams;
++            if (request.contains("style")) {
++                params.stylePath = request.value("style").toString();
++            }
++            const UriQuery extension(request.value("extension").toString().toStdString());
++            const Ret done = converter()->batchConvert(request.value("job").toString(), params, soundProfile, extension);
++            const std::string id = request.value("id").toString().toStdString();
++            std::cout << id << (done ? " ok" : " failed " + done.toString()) << std::endl;
++        }
++    } break;
+     case ConvertType::File: {
+         std::string transposeOptionsJson = task.params[CmdOptions::ParamKey::ScoreTransposeOptions].toString().toStdString();
+         std::optional<ConvertTarget> target = parseTarget(task.params);
+diff --git a/src/app/internal/platform/macos/macosbackground.h b/src/app/internal/platform/macos/macosbackground.h
+new file mode 100644
+index 00000000..28c93321
+--- /dev/null
++++ b/src/app/internal/platform/macos/macosbackground.h
+@@ -0,0 +1,27 @@
++/*
++ * SPDX-License-Identifier: GPL-3.0-only
++ * MuseScore-Studio-CLA-applies
++ *
++ * MuseScore Studio
++ * Music Composition & Notation
++ *
++ * Copyright (C) 2026 MuseScore Limited
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 3 as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ */
++#pragma once
++
++namespace mu::app {
++//! Keep a process that runs without a window out of the Dock and the menu bar
++void runWithoutDockIcon();
++}
+diff --git a/src/app/internal/platform/macos/macosbackground.mm b/src/app/internal/platform/macos/macosbackground.mm
+new file mode 100644
+index 00000000..af2b1732
+--- /dev/null
++++ b/src/app/internal/platform/macos/macosbackground.mm
+@@ -0,0 +1,29 @@
++/*
++ * SPDX-License-Identifier: GPL-3.0-only
++ * MuseScore-Studio-CLA-applies
++ *
++ * MuseScore Studio
++ * Music Composition & Notation
++ *
++ * Copyright (C) 2026 MuseScore Limited
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 3 as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ */
++#include "macosbackground.h"
++
++#import <AppKit/AppKit.h>
++
++void mu::app::runWithoutDockIcon()
++{
++    [NSApp setActivationPolicy:NSApplicationActivationPolicyProhibited];
++}
+diff --git a/src/app/main.cpp b/src/app/main.cpp
+index 2ac78a89..6784aa2e 100644
+--- a/src/app/main.cpp
++++ b/src/app/main.cpp
+@@ -23,6 +23,10 @@
+ #include <csignal>
+ 
+ #include <QApplication>
++
++#ifdef Q_OS_MACOS
++#include "internal/platform/macos/macosbackground.h"
++#endif
+ #include <QStyleHints>
+ #include <QQuickWindow>
+ #include <QSslSocket>
+@@ -161,6 +165,12 @@ int main(int argc, char** argv)
+         qapp = new QApplication(argc, argv);
+     }
+ 
++#ifdef Q_OS_MACOS
++    if (runMode == IApplication::RunMode::ConsoleApp) {
++        mu::app::runWithoutDockIcon();
++    }
++#endif
++
+     fixSslBackend();
+ 
+     commandLineParser.processBuiltinArgs(*qapp);
